@@ -21,13 +21,13 @@ migrate = Migrate(app, db)
 login = LoginManager(app)
 
 
-'''app.config['MAIL_USERNAME'] = ''
+app.config['MAIL_USERNAME'] = ''
 app.config['MAIL_PASSWORD'] = ''
 app.config['MAIL_SERVER'] = ''
 app.config['MAIL_PORT'] = 25
 app.config['SMTP_PORT'] = ''
 app.config['MAIL_USE_SSL'] = True
-app.config['MAIL_USE_TLS'] = False'''
+app.config['MAIL_USE_TLS'] = False
 
 from app import models, routes
 

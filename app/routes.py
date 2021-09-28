@@ -1,16 +1,18 @@
 from os import error
-from flask import render_template, request, flash
+from flask import render_template, request, flash, redirect
+from flask.helpers import url_for
 from app.forms import LoginForm, SignupForm
 from smtplib import SMTP_SSL, SMTPAuthenticationError
 from app import app
 from .models import User
 from app import db
 from flask_login import LoginManager
+from imap_tools import MailBox, AND
 
 @app.route('/')
 @app.route('/index')
 def index():
-    return render_template('index.html', user='Connor')
+    return render_template('index.html', email = [], user='Connor')
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
@@ -24,6 +26,7 @@ def login():
         try:
             server.login(email, password)
             flash('Success! You logged into your email!', category='success')
+            return redirect(url_for('viewEmails'))
         except SMTPAuthenticationError:
             flash('Error, these credentials are not valid.', category ='error')
 
@@ -59,6 +62,24 @@ def sign_up():
     return render_template("signup.html", form=form)
 
 
+@app.route('/view-emails')
+def viewEmails():
+    user = "tcctesteremail@gmail.com"
+    pwd = "123BigTest654"
+    with MailBox('imap.gmail.com').login(user, pwd, 'INBOX') as mailbox:
+        bodies = [msg.text for msg in mailbox.fetch()]
 
-
+        mailbox = MailBox('imap.gmail.com')
+        mailbox.login(user, pwd, initial_folder='INBOX')  # or mailbox.folder.set instead 3d arg
+        subjects = [msg.subject for msg in mailbox.fetch(AND(all=True))]
+        mailbox.logout()
+        emails = []
+        for i in range(len(subjects)):
+            emailSubject = {
+                    'subject': subjects[i],
+                    'body': bodies[i]
+                }
+            emails.insert(0, emailSubject)
+        
+    return render_template('index.html', user="Connor", emails=emails)
 
