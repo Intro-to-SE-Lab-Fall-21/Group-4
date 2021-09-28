@@ -4,7 +4,7 @@ from app.forms import LoginForm, SignupForm
 from smtplib import SMTP_SSL, SMTPAuthenticationError
 from app import app
 from .models import User
-from . import db
+from app import db
 from flask_login import LoginManager
 
 @app.route('/')
