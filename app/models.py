@@ -9,6 +9,12 @@ class User(db.Model, UserMixin):
     first_name = db.Column(db.String(50))
     last_name = db.Column(db.String(50))
 
+    def check_password(self, password):
+        if self.password == password:
+            return True
+        else:
+            return False
+
 @login.user_loader
 def load_user(id):
     return User.query.get(int(id))
