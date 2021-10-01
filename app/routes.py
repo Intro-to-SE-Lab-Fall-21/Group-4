@@ -42,6 +42,12 @@ def index():
 
     return render_template('index.html', user=current_user.first_name, subjects=subjects, uids = uids, length1 = length)
 
+@app.route('/view_email/<subject>', methods=['GET', 'POST'])
+def view_email(subject):
+    print(subject)
+    return render_template('index.html')
+    
+
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if current_user.is_authenticated:
@@ -56,8 +62,8 @@ def login():
             return redirect(url_for('login'))
         server = SMTP_SSL('smtp.gmail.com', 465)
         try:
-            server.login(user.email, user.password)
             login_user(user)
+            server.login(user.email, user.password)
             flash('Success! You logged into your email!', category='success')
             return redirect(url_for('index'))
         except SMTPAuthenticationError:
@@ -70,7 +76,7 @@ def login():
 def sign_up():
     form = SignupForm()
 
-    if request.method == 'POST':
+    if form.validate_on_submit():
         email = form.email.data
         first_name = form.first_name.data
         last_name = form.last_name.data
@@ -111,27 +117,6 @@ def view(uid):
         else:
             return render_template("index.html")'''
 
-
-'''@app.route('/view-emails')
-def viewEmails():
-    user = "tcctesteremail@gmail.com"
-    pwd = "123BigTest654"
-    with MailBox('imap.gmail.com').login(user, pwd, 'INBOX') as mailbox:
-        bodies = [msg.text for msg in mailbox.fetch()]
-
-        mailbox = MailBox('imap.gmail.com')
-        mailbox.login(user, pwd, initial_folder='INBOX')  # or mailbox.folder.set instead 3d arg
-        subjects = [msg.subject for msg in mailbox.fetch(AND(all=True))]
-        mailbox.logout()
-        emails = []
-        for i in range(len(subjects)):
-            emailSubject = {
-                    'subject': subjects[i],
-                    'body': bodies[i]
-                }
-            emails.insert(0, emailSubject)
-        
-    return render_template('index.html', user="Connor", emails=emails)'''
 
 @app.route('/logout')
 @login_required
