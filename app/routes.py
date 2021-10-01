@@ -6,6 +6,18 @@ from app import app, db
 from .models import User
 from flask_login import current_user, login_user, logout_user, login_required
 from imap_tools import MailBox, AND
+import imaplib
+import email
+
+class userEmail():
+    def __init__(self, uid, subject, body, sender):
+        self.uid = uid
+        self.subject = subject
+        self.body = body
+        self.sender = sender
+
+
+emails = []
 
 @app.route('/')
 @app.route('/index')
@@ -14,21 +26,21 @@ def index():
     user = current_user.email
     pwd = current_user.password
     with MailBox('imap.gmail.com').login(user, pwd, 'INBOX') as mailbox:
+        uids = [msg.uid for msg in mailbox.fetch()]
         bodies = [msg.text for msg in mailbox.fetch()]
-
-        mailbox = MailBox('imap.gmail.com')
-        mailbox.login(user, pwd, initial_folder='INBOX')  # or mailbox.folder.set instead 3d arg
         subjects = [msg.subject for msg in mailbox.fetch(AND(all=True))]
-        mailbox.logout()
-        emails = []
+        senders = [msg.from_ for msg in mailbox.fetch()]
+        length = 0
+        uids.reverse()
+        subjects.reverse()
+        bodies.reverse()
+        senders.reverse()
         for i in range(len(subjects)):
-            emailSubject = {
-                    'subject': subjects[i],
-                    'body': bodies[i]
-                }
-            emails.insert(0, emailSubject)
-        
-    return render_template('index.html', user=current_user.first_name, emails=emails)
+            email = userEmail(uids[i], subjects[i], bodies[i], senders[i]) 
+            emails.append(email)
+            length += 1
+
+    return render_template('index.html', user=current_user.first_name, subjects=subjects, uids = uids, length1 = length)
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
@@ -82,6 +94,22 @@ def sign_up():
                 flash('Error, these credentials are not valid.', category ='error')
 
     return render_template("signup.html", form=form)
+
+@app.route('/viewEmail/<uid>')
+@login_required
+def view(uid):
+    for email in emails:
+        x = int(email.uid)
+        y = int(uid)
+        if x == y:
+            return render_template('viewEmail.html', body=email.body, sender = email.sender, receiver = current_user.email)
+
+    return redirect(url_for('login'))
+'''
+        if email.id == id:
+            return render_template("viewEmail.html", subject = id)
+        else:
+            return render_template("index.html")'''
 
 
 '''@app.route('/view-emails')
