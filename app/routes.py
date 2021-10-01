@@ -1,34 +1,69 @@
 from os import error
-from flask import render_template, request, flash, redirect
-from flask.helpers import url_for
+from flask import render_template, request, flash, redirect, url_for
 from app.forms import LoginForm, SignupForm
 from smtplib import SMTP_SSL, SMTPAuthenticationError
-from app import app
+from app import app, db
 from .models import User
-from app import db
-from flask_login import LoginManager
+from flask_login import current_user, login_user, logout_user, login_required
 from imap_tools import MailBox, AND
+import imaplib
+import email
+
+class userEmail():
+    def __init__(self, uid, subject, body, sender):
+        self.uid = uid
+        self.subject = subject
+        self.body = body
+        self.sender = sender
+
+
+emails = []
 
 @app.route('/')
 @app.route('/index')
+@login_required
 def index():
-    return render_template('index.html', email = [], user='Connor')
+    user = current_user.email
+    pwd = current_user.password
+    with MailBox('imap.gmail.com').login(user, pwd, 'INBOX') as mailbox:
+        uids = [msg.uid for msg in mailbox.fetch()]
+        bodies = [msg.text for msg in mailbox.fetch()]
+        subjects = [msg.subject for msg in mailbox.fetch(AND(all=True))]
+        senders = [msg.from_ for msg in mailbox.fetch()]
+        length = 0
+        uids.reverse()
+        subjects.reverse()
+        bodies.reverse()
+        senders.reverse()
+        for i in range(len(subjects)):
+            email = userEmail(uids[i], subjects[i], bodies[i], senders[i]) 
+            emails.append(email)
+            length += 1
+
+    return render_template('index.html', user=current_user.first_name, subjects=subjects, uids = uids, length1 = length)
+
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
+    if current_user.is_authenticated:
+        return redirect(url_for('index'))
+
     form = LoginForm()
 
-    if request.method == 'POST':
-        email = form.email.data
-        password = form.password.data
-
+    if form.validate_on_submit():
+        user = User.query.filter_by(email=form.email.data).first()
+        if user is None or not user.check_password(form.password.data):
+            flash('Invalid email or password')
+            return redirect(url_for('login'))
         server = SMTP_SSL('smtp.gmail.com', 465)
         try:
-            server.login(email, password)
+            login_user(user)
+            server.login(user.email, user.password)
             flash('Success! You logged into your email!', category='success')
-            return redirect(url_for('viewEmails'))
+            return redirect(url_for('index'))
         except SMTPAuthenticationError:
             flash('Error, these credentials are not valid.', category ='error')
+            return redirect(url_for('login'))
 
     return render_template('login.html', form=form)
 
@@ -36,7 +71,7 @@ def login():
 def sign_up():
     form = SignupForm()
 
-    if request.method == 'POST':
+    if form.validate_on_submit():
         email = form.email.data
         first_name = form.first_name.data
         last_name = form.last_name.data
@@ -61,25 +96,19 @@ def sign_up():
 
     return render_template("signup.html", form=form)
 
+@app.route('/viewEmail/<uid>')
+@login_required
+def view(uid):
+    for email in emails:
+        x = int(email.uid)
+        y = int(uid)
+        if x == y:
+            return render_template('viewEmail.html', body=email.body, sender = email.sender, receiver = current_user.email, subject = email.subject)
 
-@app.route('/view-emails')
-def viewEmails():
-    user = "tcctesteremail@gmail.com"
-    pwd = "123BigTest654"
-    with MailBox('imap.gmail.com').login(user, pwd, 'INBOX') as mailbox:
-        bodies = [msg.text for msg in mailbox.fetch()]
+    return redirect(url_for('login'))
 
-        mailbox = MailBox('imap.gmail.com')
-        mailbox.login(user, pwd, initial_folder='INBOX')  # or mailbox.folder.set instead 3d arg
-        subjects = [msg.subject for msg in mailbox.fetch(AND(all=True))]
-        mailbox.logout()
-        emails = []
-        for i in range(len(subjects)):
-            emailSubject = {
-                    'subject': subjects[i],
-                    'body': bodies[i]
-                }
-            emails.insert(0, emailSubject)
-        
-    return render_template('index.html', user="Connor", emails=emails)
-
+@app.route('/logout')
+@login_required
+def logout():
+    logout_user()
+    return redirect(url_for('login'))
