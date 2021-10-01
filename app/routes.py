@@ -42,11 +42,6 @@ def index():
 
     return render_template('index.html', user=current_user.first_name, subjects=subjects, uids = uids, length1 = length)
 
-@app.route('/view_email/<subject>', methods=['GET', 'POST'])
-def view_email(subject):
-    print(subject)
-    return render_template('index.html')
-    
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
@@ -111,12 +106,6 @@ def view(uid):
             return render_template('viewEmail.html', body=email.body, sender = email.sender, receiver = current_user.email, subject = email.subject)
 
     return redirect(url_for('login'))
-'''
-        if email.id == id:
-            return render_template("viewEmail.html", subject = id)
-        else:
-            return render_template("index.html")'''
-
 
 @app.route('/logout')
 @login_required
