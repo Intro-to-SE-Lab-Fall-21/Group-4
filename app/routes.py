@@ -102,7 +102,7 @@ def view(uid):
         x = int(email.uid)
         y = int(uid)
         if x == y:
-            return render_template('viewEmail.html', body=email.body, sender = email.sender, receiver = current_user.email)
+            return render_template('viewEmail.html', body=email.body, sender = email.sender, receiver = current_user.email, subject = email.subject)
 
     return redirect(url_for('login'))
 '''
