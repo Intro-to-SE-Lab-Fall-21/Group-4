@@ -30,8 +30,8 @@ jobs:
     steps:
       - checkout
       - python/install-packages:
+          pytest
           pkg-manager: pip
-          - pip3 install pytest
           # app-dir: ~/project/package-directory/  # If you're requirements.txt isn't in the root directory.
           pip-dependency-file: requirements.txt # if you have a different name for your requirements file, maybe one that combines your runtime and test requirements.
       - run:
