@@ -1,13 +1,13 @@
 from os import error
 from flask import render_template, request, flash, redirect, url_for
-from app.forms import LoginForm, SignupForm
+from app.forms import LoginForm, SignupForm, ComposeForm
 from smtplib import SMTP_SSL, SMTPAuthenticationError
-from app import app, db
+from app import app, db, mail
 from .models import User
 from flask_login import current_user, login_user, logout_user, login_required
 from imap_tools import MailBox, AND
+from flask_mail import Message 
 import imaplib
-import email
 
 class userEmail():
     def __init__(self, uid, subject, body, sender):
@@ -59,6 +59,8 @@ def login():
         try:
             login_user(user)
             server.login(user.email, user.password)
+            app.config['MAIL_USERNAME'] = current_user.email
+            app.config['MAIL_PASSWORD'] = current_user.password
             flash('Success! You logged into your email!', category='success')
             return redirect(url_for('index'))
         except SMTPAuthenticationError:
@@ -107,8 +109,38 @@ def view(uid):
 
     return redirect(url_for('login'))
 
+
+@app.route('/compose', methods=['GET', 'POST'])
+@login_required
+def compose():
+    form = ComposeForm()
+    # Ensure that the user is currently signed into their mail server
+    #if app.config['MAIL_USERNAME'] == '':
+    app.config['MAIL_USERNAME'] = current_user.email
+    app.config['MAIL_PASSWORD'] = current_user.password
+
+    if form.validate_on_submit():
+        msg = Message()
+        msg.add_recipient(form.email_to.data)
+        print(msg.recipients, msg.body, msg.subject)
+        msg.body = form.body.data
+        msg.subject = form.subject.data
+        mail.send(msg)
+        try:
+            mail.send(msg)
+            print(app.config['EMAIL_USERNAME'], app.config['EMAIL_PASSWORD'])
+            flash('Success! Your email has been sent.', category='success')
+        except:
+            flash('An unexpected error occured. Please try again', category='error')
+            print('Uh Oh, Error')
+
+
+    return render_template('compose.html', form=form)
+
+
 @app.route('/logout')
 @login_required
 def logout():
     logout_user()
     return redirect(url_for('login'))
+
