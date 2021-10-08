@@ -1,12 +1,14 @@
 from os import error
 from flask import render_template, request, flash, redirect, url_for
+from flask_migrate import current
 from app.forms import LoginForm, SignupForm, ComposeForm
 from smtplib import SMTP_SSL, SMTPAuthenticationError
-from app import app, db, mail
+from app import app, db
 from .models import User
 from flask_login import current_user, login_user, logout_user, login_required
 from imap_tools import MailBox, AND
-from flask_mail import Message 
+from flask_mail import Message, Mail
+import sys
 import imaplib
 
 class userEmail():
@@ -61,6 +63,7 @@ def login():
             server.login(user.email, user.password)
             app.config['MAIL_USERNAME'] = current_user.email
             app.config['MAIL_PASSWORD'] = current_user.password
+            app.config['MAIL_DEFAULT_SENDER'] = current_user.email
             flash('Success! You logged into your email!', category='success')
             return redirect(url_for('index'))
         except SMTPAuthenticationError:
@@ -116,23 +119,24 @@ def compose():
     form = ComposeForm()
     # Ensure that the user is currently signed into their mail server
     #if app.config['MAIL_USERNAME'] == '':
+    mail = Mail(app)
     app.config['MAIL_USERNAME'] = current_user.email
     app.config['MAIL_PASSWORD'] = current_user.password
+    app.config['MAIL_DEFAULT_SENDER'] = current_user.email
+    
 
     if form.validate_on_submit():
         msg = Message()
         msg.add_recipient(form.email_to.data)
-        print(msg.recipients, msg.body, msg.subject)
         msg.body = form.body.data
         msg.subject = form.subject.data
-        mail.send(msg)
+        msg.sender = app.config['MAIL_USERNAME']
         try:
             mail.send(msg)
-            print(app.config['EMAIL_USERNAME'], app.config['EMAIL_PASSWORD'])
             flash('Success! Your email has been sent.', category='success')
         except:
             flash('An unexpected error occured. Please try again', category='error')
-            print('Uh Oh, Error')
+            print('Whew!', sys.exc_info()[0], 'occurred.')
 
 
     return render_template('compose.html', form=form)

@@ -1,31 +1,32 @@
 {% extends "base.html" %}
 
 {% block content %}
-
     <h1>Compose</h1>
-    <form action="", method='post', novalidate>
+    <form action="" method='post' novalidate>
+        {{ form.hidden_tag() }}
         <p>
-            {{ form.email_to.label }}
+            {{ form.email_to.label }} <br>
             {{ form.email_to(size=64)}}
-            {% for error in form.email_to.error %}
+            {% for error in form.email_to.errors %}
             <span>[{{ error }}]</span>
             {% endfor %}
         </p>
         <p>
-            {{ form.subject.label }}
+            {{ form.subject.label }} <br>
             {{ form.subject(size=60)}}
-            {% for error in form.subject.error %}
+            {% for error in form.subject.errors %}
             <span>[{{ error }}]</span>
             {% endfor %}
         </p>
         <p>
-            {{ form.body.label}}
-            {{ form.body(size=400)}}
+            {{ form.body.label}} <br>
+            {{ form.body(size=50)}}
+            {% for error in form.body.errors %}
+            <span>[{{ error }}]</span>
+            {% endfor %}
         </p>
         <p>
             {{ form.submit() }}
         </p>
-
     </form>
-
 {% endblock %}

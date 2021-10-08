@@ -7,35 +7,35 @@
         <p>
             {{ form.first_name.label }} <br>
             {{ form.first_name(size=40)}}
-            {% for error in form.first_name.error %}
+            {% for error in form.first_name.errors %}
             <span>[{{ error }}]</span>
             {% endfor %}
         </p>
         <p>
             {{ form.last_name.label }} <br>
             {{ form.last_name(size=40)}}
-            {% for error in form.last_name.error %}
+            {% for error in form.last_name.errors %}
             <span>[{{ error }}]</span>
             {% endfor %}
         </p>
         <p>
             {{ form.email.label }} <br>
             {{ form.email(size=64) }}
-            {% for error in form.email.error %}
+            {% for error in form.email.errors %}
             <span>[{{ error }}]</span>
             {% endfor %}
         </p>
         <p> 
             {{ form.password1.label }} <br>
             {{ form.password1(size=40) }}
-            {% for error in form.password1.error %}
+            {% for error in form.password1.errors %}
             <span>[{{ error }}]</span>
             {% endfor %}
         </p>
         <p> 
             {{ form.password2.label }} <br>
             {{ form.password2(size=40) }}
-            {% for error in form.password2.error %}
+            {% for error in form.password2.errors %}
             <span>[{{ error }}]</span>
             {% endfor %}
         </p>
