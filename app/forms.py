@@ -1,5 +1,5 @@
 from flask_wtf import FlaskForm
-from wtforms import StringField, PasswordField, SubmitField
+from wtforms import StringField, PasswordField, SubmitField, TextAreaField
 from wtforms.validators import DataRequired
 
 class LoginForm(FlaskForm):
@@ -14,3 +14,9 @@ class SignupForm(FlaskForm):
     password1 = PasswordField('Password', validators=[DataRequired()])
     password2 = PasswordField('Confirm Password', validators=[DataRequired()])
     submit = SubmitField('Sign up')
+
+class ComposeForm(FlaskForm):
+    email_to = StringField('To', validators=[DataRequired()])
+    subject =  StringField('Subject', validators=[DataRequired()])
+    body = TextAreaField('Body', validators=[DataRequired()])
+    submit = SubmitField('Send Message')
