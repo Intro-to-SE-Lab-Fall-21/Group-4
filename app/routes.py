@@ -127,7 +127,9 @@ def compose():
 
     if form.validate_on_submit():
         msg = Message()
-        msg.add_recipient(form.email_to.data)
+        recipients_string = form.email_to.data
+        recipients_string = recipients_string.replace(" ", "")
+        msg.recipients = recipients_string.split(",")
         msg.body = form.body.data
         msg.subject = form.subject.data
         msg.sender = app.config['MAIL_USERNAME']
