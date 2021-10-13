@@ -29,16 +29,23 @@
                 </div>
             </div>
         </nav>
-        {% with messages = get_flashed_messages(with_categories=true) %} {% if
-            messages %} {% for category, message in messages %} {% if category ==
-            'error' %}
-            <div role="alert"></div>
-              {{ message }}
-            </div>
-            {% else %}
-            <div role="alert">
-              {{ message }}
-            </div>
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %} 
+                {% for category, message in messages %} 
+                    {% if category == 'success' %}
+                        <div class="alert alert-success alter-dismissable fade show" role="alert">
+                            {{ message }}
+                            <span style="float:right">
+                                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                            </span>
+                        </div>
+                    {% else %}
+                        <div class="alert alert-danger alter-dismissable fade show" role="alert">
+                            {{ message }}
+                            <span style="float:right">
+                                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                            </span>
+                        </div>
             {% endif %} {% endfor %} {% endif %} {% endwith %}
         {% block content %}{% endblock %}
 
