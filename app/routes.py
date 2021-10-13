@@ -1,6 +1,5 @@
 from os import error
 from flask import render_template, request, flash, redirect, url_for
-from flask_migrate import current
 from app.forms import LoginForm, SignupForm, ComposeForm
 from smtplib import SMTP_SSL, SMTPAuthenticationError
 from app import app, db
@@ -136,6 +135,7 @@ def compose():
         try:
             mail.send(msg)
             flash('Success! Your email has been sent.', category='success')
+            return redirect(url_for('index'))
         except:
             flash('An unexpected error occured. Please try again', category='error')
             print('Whew!', sys.exc_info()[0], 'occurred.')
@@ -147,6 +147,7 @@ def compose():
 @app.route('/logout')
 @login_required
 def logout():
+    emails.clear()
     logout_user()
     return redirect(url_for('login'))
 

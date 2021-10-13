@@ -1,12 +1,13 @@
 {% extends "base.html" %}
 
 {% block content %}
+<div class="container">
     <h1>Sign Up</h1>
     <form action="" method="post" novalidate>
         {{ form.hidden_tag() }}
         <p>
             {{ form.first_name.label }} <br>
-            {{ form.first_name(size=40)}}
+            {{ form.first_name(size=40, class="form-control")}}
             {% for error in form.first_name.errors %}
             <span>[{{ error }}]</span>
             {% endfor %}
@@ -43,4 +44,5 @@
             {{ form.submit() }}
         </p>
     </form>
+</div>
 {% endblock %}
