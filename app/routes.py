@@ -8,10 +8,8 @@ from .models import User
 from flask_login import current_user, login_user, logout_user, login_required
 from imap_tools import MailBox, AND
 from flask_mail import Message, Mail
-from werkzeug.utils import secure_filename
 from mimetypes import guess_type
 import sys
-import imaplib
 
 class userEmail():
     def __init__(self, uid, subject, body, sender):
@@ -133,10 +131,9 @@ def compose():
         msg.subject = form.subject.data
         msg.sender = app.config['MAIL_USERNAME']
         
-        if form.attachment:
+        if form.attachment.data.filename:
             type = guess_type(form.attachment.data.filename)
-            msg.attach(form.attachment.data.filename, type, form.attachment.data.read())
-            print(form.attachment.data.read, form.attachment.data)
+            msg.attach(form.attachment.data.filename, str(type), form.attachment.data.read())
             
         try:
             mail.send(msg)
