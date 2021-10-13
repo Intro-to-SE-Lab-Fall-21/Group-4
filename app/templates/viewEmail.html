@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 
 {% block content %}
-
+<div class="container">
 <p>
     From: {{ sender }} <br />
     To: {{ receiver }} <br />
@@ -9,7 +9,7 @@
     Body: <br />
 </p>
 
-<pre style="white-space: pre-wrap">
-{{ body }}
-</pre>
+<pre style="white-space: pre-wrap"><span style="font-family: Arial, Helvetica, sans-serif; font-size: 16px" >{{ body }}</span></pre>
+
+</div>
 {% endblock %}
