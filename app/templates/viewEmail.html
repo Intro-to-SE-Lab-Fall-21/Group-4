@@ -1,9 +1,15 @@
 {% extends "base.html" %}
 
 {% block content %}
-<p>From: {{ sender }}</p>
-<p>To: {{ receiver }}</p>
-<p>Subject: {{ subject }}</p>
-<p>Body: {{ body }}</p>
+<div class="container">
+<p>
+    From: {{ sender }} <br />
+    To: {{ receiver }} <br />
+    Subject: {{ subject }} <br />
+    Body: <br />
+</p>
 
+<pre style="white-space: pre-wrap"><span style="font-family: Arial, Helvetica, sans-serif; font-size: 16px" >{{ body }}</span></pre>
+
+</div>
 {% endblock %}

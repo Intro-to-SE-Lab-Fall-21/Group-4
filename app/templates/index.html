@@ -1,10 +1,12 @@
 {% extends "base.html" %}
 
 {% block content %}
+<div class="container">
     <h2 align='center'>Hello, {{ user }}! Welcome to StarMail</h2>
     <h3>Subjects: </h3>
     {% for i in range(length1) %}
         <a href="{{ url_for('view', uid = uids[i]) }}">{{ subjects[i] }}</a>
         <hr>
   {% endfor %}
+</div>
 {% endblock %}
