@@ -3,7 +3,7 @@
 {% block content %}
     <h1 align="center">Compose</h1>
     <div class="container">
-    <form action="" method='post' novalidate>
+    <form action="" method='post' novalidate enctype="multipart/form-data">
         {{ form.hidden_tag() }}
         <p>
             {{ form.email_to.label }} <br>
@@ -25,6 +25,10 @@
             {% for error in form.body.errors %}
             <span>[{{ error }}]</span>
             {% endfor %}
+        </p>
+        <p>
+            {{ form.attachment.label }} <br />
+            {{ form.attachment() }}
         </p>
         <p>
             {{ form.submit(class="btn btn-primary") }}
