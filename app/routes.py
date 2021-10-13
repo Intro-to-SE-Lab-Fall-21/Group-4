@@ -8,8 +8,8 @@ from .models import User
 from flask_login import current_user, login_user, logout_user, login_required
 from imap_tools import MailBox, AND
 from flask_mail import Message, Mail
+from mimetypes import guess_type
 import sys
-import imaplib
 
 class userEmail():
     def __init__(self, uid, subject, body, sender):
@@ -117,13 +117,10 @@ def view(uid):
 @login_required
 def compose():
     form = ComposeForm()
-    # Ensure that the user is currently signed into their mail server
-    #if app.config['MAIL_USERNAME'] == '':
-    mail = Mail(app)
     app.config['MAIL_USERNAME'] = current_user.email
     app.config['MAIL_PASSWORD'] = current_user.password
     app.config['MAIL_DEFAULT_SENDER'] = current_user.email
-    
+    mail = Mail(app)
 
     if form.validate_on_submit():
         msg = Message()
@@ -133,6 +130,11 @@ def compose():
         msg.body = form.body.data
         msg.subject = form.subject.data
         msg.sender = app.config['MAIL_USERNAME']
+        
+        if form.attachment.data.filename:
+            type = guess_type(form.attachment.data.filename)
+            msg.attach(form.attachment.data.filename, str(type), form.attachment.data.read())
+            
         try:
             mail.send(msg)
             flash('Success! Your email has been sent.', category='success')
