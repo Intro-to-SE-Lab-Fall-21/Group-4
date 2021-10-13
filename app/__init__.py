@@ -8,11 +8,6 @@ from flask_migrate import Migrate
 from os import path
 
 
-'''def create_database(app):
-    if not path.exists('app/' + DB_NAME):
-        db.create_all(app=app)
-        print('Created Database!')'''
-
 
 app = Flask(__name__)
 app.config.from_object(Config)
@@ -31,9 +26,5 @@ app.config['MAIL_USE_TLS'] = False
 
 
 from app import models, routes
-
-#db.init_app(app)
-#create_database(app)
-
 
 
