@@ -21,7 +21,7 @@
         </p>
         <p>
             {{ form.body.label}} <br>
-            {{ form.body(size=50, class="form-control")}}
+            {{ form.body(size=50, class="form-control", id="mytextarea")}}
             {% for error in form.body.errors %}
             <span>[{{ error }}]</span>
             {% endfor %}

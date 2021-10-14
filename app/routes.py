@@ -9,13 +9,15 @@ from imap_tools import MailBox, AND
 from flask_mail import Message, Mail
 from mimetypes import guess_type
 import sys
+from bs4 import BeautifulSoup
 
 class userEmail():
-    def __init__(self, uid, subject, body, sender):
+    def __init__(self, uid, subject, body, sender, isHTML):
         self.uid = uid
         self.subject = subject
         self.body = body
         self.sender = sender
+        self.isHTML = isHTML
 
 
 emails = []
@@ -29,15 +31,24 @@ def index():
     with MailBox('imap.gmail.com').login(user, pwd, 'INBOX') as mailbox:
         uids = [msg.uid for msg in mailbox.fetch()]
         bodies = [msg.text for msg in mailbox.fetch()]
+        bodiesHTML = [msg.html for msg in mailbox.fetch()]
         subjects = [msg.subject for msg in mailbox.fetch(AND(all=True))]
         senders = [msg.from_ for msg in mailbox.fetch()]
         length = 0
         uids.reverse()
         subjects.reverse()
+        bodiesHTML.reverse()
         bodies.reverse()
         senders.reverse()
         for i in range(len(subjects)):
-            email = userEmail(uids[i], subjects[i], bodies[i], senders[i]) 
+            email = userEmail(uids[i], subjects[i], bodiesHTML[i], senders[i], False) 
+            soup = BeautifulSoup(email.body, 'html.parser')
+            email.body = soup.decode_contents()
+            if(bodiesHTML[i] == ""):
+                email.body = bodies[i]
+                email.isHTML = False
+            else:
+                email.isHTML = True
             emails.append(email)
             length += 1
 
@@ -107,7 +118,9 @@ def view(uid):
         x = int(email.uid)
         y = int(uid)
         if x == y:
-            return render_template('viewEmail.html', body=email.body, sender = email.sender, receiver = current_user.email, subject = email.subject)
+            print(email.body)
+            print("--------------------------------------------")
+            return render_template('viewEmail.html', isHTML = email.isHTML, body = email.body, sender = email.sender, receiver = current_user.email, subject = email.subject)
 
     return redirect(url_for('login'))
 
@@ -126,7 +139,7 @@ def compose():
         recipients_string = form.email_to.data
         recipients_string = recipients_string.replace(" ", "")
         msg.recipients = recipients_string.split(",")
-        msg.body = form.body.data
+        msg.html = form.body.data
         msg.subject = form.subject.data
         msg.sender = app.config['MAIL_USERNAME']
         
