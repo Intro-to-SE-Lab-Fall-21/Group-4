@@ -19,14 +19,50 @@ class userEmail():
         self.sender = sender
         self.isHTML = isHTML
 
-
 emails = []
+subjects = []
+uids = []
+
+def getEmails():
+    user = current_user.email
+    pwd = current_user.password
+    with MailBox('imap.gmail.com').login(user, pwd, 'INBOX') as mailbox:
+        uids = [msg.uid for msg in mailbox.fetch()]
+        bodies = [msg.text for msg in mailbox.fetch()]
+        bodiesHTML = [msg.html for msg in mailbox.fetch()]
+        subjects = [msg.subject for msg in mailbox.fetch(AND(all=True))]
+        senders = [msg.from_ for msg in mailbox.fetch()]
+        uids.reverse()
+        subjects.reverse()
+        bodiesHTML.reverse()
+        bodies.reverse()
+        senders.reverse()
+        for i in range(len(subjects)):
+            email = userEmail(uids[i], subjects[i], bodiesHTML[i], senders[i], False) 
+            soup = BeautifulSoup(email.body, 'html.parser')
+            email.body = soup.decode_contents()
+            if(bodiesHTML[i] == ""):
+                email.body = bodies[i]
+                email.isHTML = False
+            else:
+                email.isHTML = True
+            emails.append(email)
+
 
 @app.route('/')
-@app.route('/index')
+@app.route('/index/<refresh>')
 @login_required
-def index():
-    user = current_user.email
+def index(refresh="False"):
+    if not emails or refresh == "True":
+        emails.clear()
+        subjects.clear()
+        uids.clear()
+        getEmails()
+        for email in emails:
+
+            subjects.append(email.subject)
+            uids.append(email.uid)
+    '''user = current_user.email
     pwd = current_user.password
     with MailBox('imap.gmail.com').login(user, pwd, 'INBOX') as mailbox:
         uids = [msg.uid for msg in mailbox.fetch()]
@@ -50,9 +86,9 @@ def index():
             else:
                 email.isHTML = True
             emails.append(email)
-            length += 1
+            length += 1'''
 
-    return render_template('index.html', user=current_user.first_name, subjects=subjects, uids = uids, length1 = length)
+    return render_template('index.html', user=current_user.first_name, subjects = subjects, uids = uids, length1 = len(subjects))
 
 
 @app.route('/login', methods=['GET', 'POST'])
@@ -118,8 +154,6 @@ def view(uid):
         x = int(email.uid)
         y = int(uid)
         if x == y:
-            print(email.body)
-            print("--------------------------------------------")
             return render_template('viewEmail.html', isHTML = email.isHTML, body = email.body, sender = email.sender, receiver = current_user.email, subject = email.subject)
 
     return redirect(url_for('login'))
@@ -163,6 +197,8 @@ def compose():
 @login_required
 def logout():
     emails.clear()
+    subjects.clear()
+    uids.clear()
     logout_user()
     return redirect(url_for('login'))
 

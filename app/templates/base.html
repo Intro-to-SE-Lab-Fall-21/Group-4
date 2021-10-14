@@ -29,7 +29,8 @@
                         <a class="nav-item nav-link" href="/login">Login</a>
                         <a class="nav-item nav-link" href="/sign-up">Sign Up</a>
                     {% else %}
-                        <a class="nav-item nav-link" href="/index">Home</a>
+                        <a class="nav-item nav-link" href="{{ url_for('index', refresh = False) }}">Home</a>
+                        <a class="nav-item nav-link" href="{{ url_for('index', refresh = True) }}">Refresh</a>
                         <a class="nav-item nav-link" href="/compose">Compose   </a>
                         <a class="nav-item nav-link" href="/logout">Logout</a>
                     {% endif %}
