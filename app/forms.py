@@ -20,4 +20,4 @@ class ComposeForm(FlaskForm):
     subject =  StringField('Subject', validators=[DataRequired()])
     body = TextAreaField('Body', validators=[DataRequired()])
     submit = SubmitField('Send Message')
-    attachment = FileField('Attatch')
+    attachment = FileField('Attachments')
