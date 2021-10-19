@@ -1,5 +1,5 @@
-{% extends "base.html" %} {% block content %}
-<h1 align="center">Compose</h1>
+{% include 'viewEmail.html' %} {% block foward %}
+<h1 align="left"><b>Forward:</h1>
 <div class="container">
   <form action="" method="post" novalidate enctype="multipart/form-data">
     {{ form.hidden_tag() }}
@@ -25,10 +25,11 @@
       {% endfor %}
     </p>
     <p>
-      {{ form.attachment.label }} <br />
-      {{ form.attachment() }}
+      <!--{{ form.attachment.label }} <br />
+      {{ form.attachment() }}-->
     </p>
     <p>{{ form.submit(class="btn btn-primary") }}</p>
   </form>
 </div>
+
 {% endblock %}

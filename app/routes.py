@@ -48,6 +48,43 @@ def getEmails():
                 email.isHTML = True
             emails.append(email)
 
+@app.route('/forward/<uid>', methods=['GET','POST'])
+def forwardEmail(uid):
+    form = ComposeForm()
+    app.config['MAIL_USERNAME'] = current_user.email
+    app.config['MAIL_PASSWORD'] = current_user.password
+    app.config['MAIL_DEFAULT_SENDER'] = current_user.email
+    mail = Mail(app)
+
+    if form.validate_on_submit():
+        msg = Message()
+        recipients_string = form.email_to.data
+        recipients_string = recipients_string.replace(" ", "")
+        msg.recipients = recipients_string.split(",")
+        msg.html = form.body.data
+        msg.subject = form.subject.data
+        msg.sender = app.config['MAIL_USERNAME']
+
+        try:
+            mail.send(msg)
+            flash('Success! Your email has been sent.', category='success')
+            return redirect(url_for('index'))
+        except:
+            flash('An unexpected error occured. Please try again', category='error')
+            print('Whew!', sys.exc_info()[0], 'occurred.')
+        
+
+    for email in emails:
+        x = int(email.uid)
+        y = int(uid)
+        if x == y:
+            if email.isHTML:
+                form.body.data = email.body
+                form.subject.data  = 'FW: (' + email.sender + ') ' + email.subject
+            return render_template('/forward.html', form=form, isHTML = email.isHTML, body = email.body, sender = email.sender, receiver = current_user.email, subject = email.subject, uid = email.uid, forward=True)
+
+    return render_template('/index.html/', form=form)
+
 
 @app.route('/')
 @app.route('/index/<refresh>')
@@ -126,12 +163,12 @@ def sign_up():
 @app.route('/viewEmail/<uid>')
 @login_required
 def view(uid):
+
     for email in emails:
         x = int(email.uid)
         y = int(uid)
         if x == y:
-            return render_template('viewEmail.html', isHTML = email.isHTML, body = email.body, sender = email.sender, receiver = current_user.email, subject = email.subject)
-
+            return render_template('viewEmail.html', isHTML = email.isHTML, body = email.body, sender = email.sender, receiver = current_user.email, subject = email.subject, uid = email.uid, forward=False)
     return redirect(url_for('login'))
 
 

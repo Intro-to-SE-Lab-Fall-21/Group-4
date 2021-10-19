@@ -1,18 +1,20 @@
-{% extends "base.html" %}
-
-{% block content %}
+{% extends "base.html" %} {% block content %}
 <div class="container">
-<p>
+  <p>
     From: {{ sender }} <br />
     To: {{ receiver }} <br />
     Subject: {{ subject }} <br />
     Body: <br />
-</p>
-{% if isHTML %}
-    <p>{{ body |safe }}</p>
-{% else %}
-    <pre style="white-space: pre-wrap"><span style="font-family: Arial, Helvetica, sans-serif; font-size: 16px" >{{ body }}</span></pre>
+  </p>
+  {% if isHTML %}
+  <p>{{ body |safe }}</p>
+  {% else %}
+  <pre
+    style="white-space: pre-wrap"
+  ><span style="font-family: Arial, Helvetica, sans-serif; font-size: 16px" >{{ body }}</span></pre>
 </div>
-
-{% endif %}
-{% endblock %}
+{% endif %} {% if forward==False %}
+<a class="btn btn-primary" href="{{ url_for('forwardEmail', uid = uid) }}"
+  >Forward</a
+>
+{% endif %} {% endblock %} {% block forward %} {% endblock %}
