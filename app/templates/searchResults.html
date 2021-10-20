@@ -23,9 +23,10 @@
         <button type="submit" class="btn btn-outline-primary">Search</button>
         </div>
       </form>
-      <br>
+
     </div>
-    
+    <p>Showing Search Results for "{{ search }}"</p>
+    <br>
     {% for i in range(length1) %}
         <a href="{{ url_for('view', uid = uids[i]) }}">{{ subjects[i] }}</a>
         <hr>
