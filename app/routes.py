@@ -1,6 +1,6 @@
 from os import error
 from flask import render_template, request, flash, redirect, url_for
-from app.forms import LoginForm, SignupForm, ComposeForm
+from app.forms import ForwardReplyForm, LoginForm, SignupForm, ComposeForm
 from smtplib import SMTP_SSL, SMTPAuthenticationError
 from app import app, db
 from .models import User
@@ -48,44 +48,6 @@ def getEmails():
                 email.isHTML = True
             emails.append(email)
 
-@app.route('/forward/<uid>', methods=['GET','POST'])
-def forwardEmail(uid):
-    form = ComposeForm()
-    app.config['MAIL_USERNAME'] = current_user.email
-    app.config['MAIL_PASSWORD'] = current_user.password
-    app.config['MAIL_DEFAULT_SENDER'] = current_user.email
-    mail = Mail(app)
-
-    if form.validate_on_submit():
-        msg = Message()
-        recipients_string = form.email_to.data
-        recipients_string = recipients_string.replace(" ", "")
-        msg.recipients = recipients_string.split(",")
-        msg.html = form.body.data
-        msg.subject = form.subject.data
-        msg.sender = app.config['MAIL_USERNAME']
-
-        try:
-            mail.send(msg)
-            flash('Success! Your email has been sent.', category='success')
-            return redirect(url_for('index'))
-        except:
-            flash('An unexpected error occured. Please try again', category='error')
-            print('Whew!', sys.exc_info()[0], 'occurred.')
-        
-
-    for email in emails:
-        x = int(email.uid)
-        y = int(uid)
-        if x == y:
-            if email.isHTML:
-                form.body.data = email.body
-                form.subject.data  = 'FW: (' + email.sender + ') ' + email.subject
-            return render_template('/forward.html', form=form, isHTML = email.isHTML, body = email.body, sender = email.sender, receiver = current_user.email, subject = email.subject, uid = email.uid, forward=True)
-
-    return render_template('/index.html/', form=form)
-
-
 @app.route('/')
 @app.route('/index/<refresh>')
 @login_required
@@ -99,8 +61,6 @@ def index(refresh="False"):
 
             subjects.append(email.subject)
             uids.append(email.uid)
-
-
     return render_template('index.html', user=current_user.first_name, subjects = subjects, uids = uids, length1 = len(subjects))
 
 
@@ -128,8 +88,8 @@ def login():
         except SMTPAuthenticationError:
             flash('Error, these credentials are not valid.', category ='error')
             return redirect(url_for('login'))
-
     return render_template('login.html', form=form)
+
 
 @app.route('/sign-up', methods=['GET', 'POST'])
 def sign_up():
@@ -157,18 +117,63 @@ def sign_up():
                 flash('Success! You logged into your email!', category='success')
             except SMTPAuthenticationError:
                 flash('Error, these credentials are not valid.', category ='error')
-
     return render_template("signup.html", form=form)
 
-@app.route('/viewEmail/<uid>')
+
+@app.route('/viewEmail/<uid>', methods=['GET', 'POST'])
 @login_required
 def view(uid):
+    forward = False
+    reply_flag = False
+    form = ForwardReplyForm()
+    app.config['MAIL_USERNAME'] = current_user.email
+    app.config['MAIL_PASSWORD'] = current_user.password
+    app.config['MAIL_DEFAULT_SENDER'] = current_user.email
+    mail = Mail(app)
 
-    for email in emails:
-        x = int(email.uid)
+    email = userEmail('', '', '', '', '')
+    for user_email in emails:
+        x = int(user_email.uid)
         y = int(uid)
         if x == y:
-            return render_template('viewEmail.html', isHTML = email.isHTML, body = email.body, sender = email.sender, receiver = current_user.email, subject = email.subject, uid = email.uid, forward=False)
+            email = userEmail(user_email.uid, user_email.subject, user_email.body, user_email.sender, user_email.isHTML)
+            if form.is_submitted():
+                if form.forward.data:
+                    forward = True
+                    reply_flag = False
+                    form.compose.body.data = email.body
+                    form.compose.subject.data = 'FW: (' + email.sender + ') ' + email.subject
+                    return render_template('viewEmail.html', form=form, isHTML = email.isHTML, body = email.body, sender = email.sender, receiver = current_user.email, subject = email.subject, uid = email.uid, forward=forward, reply_flag=reply_flag)
+                elif form.reply.data:
+                    reply_flag = True
+                    forward = False
+                    form.compose.subject.data = email.subject
+                    form.compose.email_to.data = email.sender
+                    return render_template('viewEmail.html', form=form, isHTML = email.isHTML, body = email.body, sender = email.sender, receiver = current_user.email, subject = email.subject, uid = email.uid, forward=forward, reply_flag=reply_flag)
+                elif form.compose.validate_on_submit():
+                    msg = Message()
+                    recipients_string = form.compose.email_to.data
+                    recipients_string = recipients_string.replace(" ", "")
+                    msg.recipients = recipients_string.split(",")
+                    msg.html = form.compose.body.data
+                    msg.subject = form.compose.subject.data
+                    msg.sender = app.config['MAIL_USERNAME']
+                    if reply_flag:
+                        msg.reply_to = email.sender
+
+                    if form.compose.attachment.data.filename:
+                        type = guess_type(form.compose.attachment.data.filename)
+                        msg.attach(form.compose.attachment.data.filename, str(type), form.compose.attachment.data.read())
+                        
+                    try:
+                        mail.send(msg)
+                        flash('Success! Your email has been sent.', category='success')
+                        return redirect(url_for('index'))
+                    except:
+                        flash('An unexpected error occured. Please try again', category='error')
+                        print('Whew!', sys.exc_info()[0], 'occurred.')
+
+            return render_template('viewEmail.html', form=form, isHTML = email.isHTML, body = email.body, sender = email.sender, receiver = current_user.email, subject = email.subject, uid = email.uid, forward=forward, reply_flag=reply_flag)
     return redirect(url_for('login'))
 
 
@@ -201,8 +206,6 @@ def compose():
         except:
             flash('An unexpected error occured. Please try again', category='error')
             print('Whew!', sys.exc_info()[0], 'occurred.')
-
-
     return render_template('compose.html', form=form)
 
 

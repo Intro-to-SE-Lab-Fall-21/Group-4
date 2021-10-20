@@ -13,8 +13,79 @@
     style="white-space: pre-wrap"
   ><span style="font-family: Arial, Helvetica, sans-serif; font-size: 16px" >{{ body }}</span></pre>
 </div>
-{% endif %} {% if forward==False %}
-<a class="btn btn-primary" href="{{ url_for('forwardEmail', uid = uid) }}"
-  >Forward</a
->
-{% endif %} {% endblock %} {% block forward %} {% endblock %}
+
+{% endif %} <br />{% if forward==False %}
+  <form action="" method="post"><p>{{ form.forward(class="btn btn-primary") }}</p></form>
+{% endif %} {% if reply_flag==False %}
+<form action="" method="post"><p>{{ form.reply(class="btn btn-primary") }}</p></form>
+{% endif %} 
+
+{% if forward==True %}
+<h1 align="left"><b>Forward:</h1>
+  <div class="container">
+    <form action="" method="post" novalidate enctype="multipart/form-data">
+      {{ form.compose.hidden_tag() }}
+      <p>
+        {{ form.compose.email_to.label }} <br />
+        {{ form.compose.email_to(size=10, class="form-control")}} {% for error in
+        form.compose.email_to.errors %}
+        <span>[{{ error }}]</span>
+        {% endfor %}
+      </p>
+      <p>
+        {{ form.compose.subject.label }} <br />
+        {{ form.compose.subject(size=60, class="form-control")}} {% for error in
+        form.compose.subject.errors %}
+        <span>[{{ error }}]</span>
+        {% endfor %}
+      </p>
+      <p>
+        {{ form.compose.body.label}} <br />
+        {{ form.compose.body(rows=20, class="form-control", id="mytextarea")}} {% for
+        error in form.compose.body.errors %}
+        <span>[{{ error }}]</span>
+        {% endfor %}
+      </p>
+      <p>
+        {{ form.compose.attachment.label }} <br />
+        {{ form.compose.attachment() }}
+      </p>
+      <p>{{ form.compose.submit(class="btn btn-primary") }}</p>
+    </form>
+  </div>
+
+{% elif reply_flag==True %} 
+<h1 align="left"><b>Reply:</h1>
+  <div class="container">
+    <form action="" method="post" novalidate enctype="multipart/form-data">
+      {{ form.compose.hidden_tag() }}
+      <p>
+        {{ form.compose.email_to.label }} <br />
+        {{ form.compose.email_to(size=64, class="form-control")}} {% for error in
+        form.compose.email_to.errors %}
+        <span>[{{ error }}]</span>
+        {% endfor %}
+      </p>
+      <p>
+        {{ form.compose.subject.label }} <br />
+        {{ form.compose.subject(size=60, class="form-control")}} {% for error in
+        form.compose.subject.errors %}
+        <span>[{{ error }}]</span>
+        {% endfor %}
+      </p>
+      <p>
+        {{ form.compose.body.label}} <br />
+        {{ form.compose.body(rows=20, class="form-control", id="mytextarea")}} {% for
+        error in form.compose.body.errors %}
+        <span>[{{ error }}]</span>
+        {% endfor %}
+      </p>
+      <p>
+        {{ form.compose.attachment.label }} <br />
+        {{ form.compose.attachment() }}
+      </p>
+      <p>{{ form.compose.submit(class="btn btn-primary") }}</p>
+    </form>
+  </div> 
+  {% endif %}
+{% endblock %}
