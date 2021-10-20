@@ -1,5 +1,5 @@
 from flask_wtf import FlaskForm
-from wtforms import StringField, PasswordField, SubmitField, TextAreaField, FileField
+from wtforms import StringField, PasswordField, SubmitField, TextAreaField, FileField, FormField
 from wtforms.validators import DataRequired
 
 class LoginForm(FlaskForm):
@@ -21,3 +21,8 @@ class ComposeForm(FlaskForm):
     body = TextAreaField('Body', validators=[DataRequired()])
     submit = SubmitField('Send Message')
     attachment = FileField('Attachments')
+
+class ForwardReplyForm(FlaskForm):
+    forward = SubmitField('Forward')
+    reply = SubmitField('Reply')
+    compose = FormField(ComposeForm)
