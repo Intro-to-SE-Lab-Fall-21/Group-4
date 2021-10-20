@@ -49,10 +49,18 @@ def getEmails():
             emails.append(email)
 
 
-@app.route('/')
-@app.route('/index/<refresh>')
+@app.route('/', methods=['GET', 'POST'])
+@app.route('/index/<refresh>', methods=['GET', 'POST'])
 @login_required
 def index(refresh="False"):
+    search1 = ""
+    if request.method == 'POST':
+        search1 = request.form.get('search')
+        if search1:
+            return redirect(url_for('searchResults', search=search1))
+        else:
+            return redirect(url_for('index'))
+
     if not emails or refresh == "True":
         emails.clear()
         subjects.clear()
@@ -63,8 +71,11 @@ def index(refresh="False"):
             subjects.append(email.subject)
             uids.append(email.uid)
 
+    #if request.method == 'POST':
+    #    search1 = request.form.get('search')
+    #   return redirect(url_for('searchResults', search=search1))  
 
-    return render_template('index.html', user=current_user.first_name, subjects = subjects, uids = uids, length1 = len(subjects))
+    return render_template('index.html', search = 0, user = current_user.first_name, subjects = subjects, uids = uids, length1 = len(subjects))
 
 
 @app.route('/login', methods=['GET', 'POST'])
@@ -167,6 +178,28 @@ def compose():
 
 
     return render_template('compose.html', form=form)
+
+@app.route('/searchResults/<search>', methods=['GET', 'POST'])
+@login_required
+def searchResults(search):
+    search1 = ""
+    searchResultsSubjs = []
+    searchResultsUids = []
+    for email in emails:
+        subj = email.subject.lower()
+        search = search.lower()
+        if search in subj:
+            searchResultsSubjs.append(email.subject)
+            searchResultsUids.append(email.uid)
+
+    if request.method == 'POST':
+        search1 = request.form.get('search')
+        if search1:
+            return redirect(url_for('searchResults', search=search1))
+        else:
+            return redirect(url_for('index'))
+    
+    return render_template('searchResults.html', search=search, user = current_user.first_name, subjects = searchResultsSubjs, uids = searchResultsUids, length1 = len(searchResultsUids))
 
 
 @app.route('/logout')
