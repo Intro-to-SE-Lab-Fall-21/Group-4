@@ -6,20 +6,26 @@ from flask_mail import Mail
 from flask_migrate import Migrate
 
 
-app = Flask(__name__)
-app.config.from_object(Config)
-db = SQLAlchemy(app)
-migrate = Migrate(app, db)
-login = LoginManager(app)
-login.login_view = 'login'
+db = SQLAlchemy()
 
-app.config['MAIL_USERNAME'] = ''
-app.config['MAIL_PASSWORD'] = ''
-app.config['MAIL_SERVER'] = 'smtp.gmail.com'
-app.config['MAIL_PORT'] = 465
-app.config['MAIL_USE_SSL'] = True
-app.config['MAIL_USE_TLS'] = False
+def create_app():
+    app = Flask(__name__)
+    app.config.from_object(Config)
+    db.init_app(app)
+    migrate = Migrate(app, db)
 
-from app import models, routes
+    from .routes import view
 
+    app.register_blueprint(view, url_prefix='/')
+
+    from .models import User
+
+    login = LoginManager(app)
+    login.login_view = 'login'
+    login.init_app(app)
+    @login.user_loader
+    def load_user(id):
+        return User.query.get(int(id))
+
+    return app
 

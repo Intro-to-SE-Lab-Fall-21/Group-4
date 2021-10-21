@@ -1,5 +1,5 @@
 
-from app import db, login
+from app import db
 from flask_login import UserMixin
 
 class User(db.Model, UserMixin):
@@ -14,7 +14,3 @@ class User(db.Model, UserMixin):
             return True
         else:
             return False
-
-@login.user_loader
-def load_user(id):
-    return User.query.get(int(id))

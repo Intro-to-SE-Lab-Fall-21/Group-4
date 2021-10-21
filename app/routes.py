@@ -1,8 +1,8 @@
 from os import error
-from flask import render_template, request, flash, redirect, url_for
+from flask import render_template, request, flash, redirect, url_for, Blueprint, current_app
 from app.forms import ForwardReplyForm, LoginForm, SignupForm, ComposeForm
 from smtplib import SMTP_SSL, SMTPAuthenticationError
-from app import app, db
+from app import  db
 from .models import User
 from flask_login import current_user, login_user, logout_user, login_required
 from imap_tools import MailBox, AND
@@ -11,6 +11,7 @@ from mimetypes import guess_type
 import sys
 from bs4 import BeautifulSoup
 
+view = Blueprint('view', __name__)
 class userEmail():
     def __init__(self, uid, subject, body, sender, isHTML):
         self.uid = uid
@@ -48,8 +49,8 @@ def getEmails():
                 email.isHTML = True
             emails.append(email)
 
-@app.route('/')
-@app.route('/index/<refresh>')
+@view.route('/')
+@view.route('/index/<refresh>')
 @login_required
 def index(refresh="False"):
     if not emails or refresh == "True":
@@ -64,10 +65,10 @@ def index(refresh="False"):
     return render_template('index.html', user=current_user.first_name, subjects = subjects, uids = uids, length1 = len(subjects))
 
 
-@app.route('/login', methods=['GET', 'POST'])
+@view.route('/login', methods=['GET', 'POST'])
 def login():
     if current_user.is_authenticated:
-        return redirect(url_for('index'))
+        return redirect(url_for('view.index'))
 
     form = LoginForm()
 
@@ -75,23 +76,23 @@ def login():
         user = User.query.filter_by(email=form.email.data).first()
         if user is None or not user.check_password(form.password.data):
             flash('Invalid email or password')
-            return redirect(url_for('login'))
+            return redirect(url_for('view.login'))
         server = SMTP_SSL('smtp.gmail.com', 465)
         try:
             login_user(user)
             server.login(user.email, user.password)
-            app.config['MAIL_USERNAME'] = current_user.email
-            app.config['MAIL_PASSWORD'] = current_user.password
-            app.config['MAIL_DEFAULT_SENDER'] = current_user.email
+            current_app.config['MAIL_USERNAME'] = current_user.email
+            current_app.config['MAIL_PASSWORD'] = current_user.password
+            current_app.config['MAIL_DEFAULT_SENDER'] = current_user.email
             flash('Success! You logged into your email!', category='success')
-            return redirect(url_for('index'))
+            return redirect(url_for('view.index'))
         except SMTPAuthenticationError:
             flash('Error, these credentials are not valid.', category ='error')
-            return redirect(url_for('login'))
+            return redirect(url_for('view.login'))
     return render_template('login.html', form=form)
 
 
-@app.route('/sign-up', methods=['GET', 'POST'])
+@view.route('/sign-up', methods=['GET', 'POST'])
 def sign_up():
     form = SignupForm()
 
@@ -120,16 +121,16 @@ def sign_up():
     return render_template("signup.html", form=form)
 
 
-@app.route('/viewEmail/<uid>', methods=['GET', 'POST'])
+@view.route('/viewEmail/<uid>', methods=['GET', 'POST'])
 @login_required
-def view(uid):
+def viewEmail(uid):
     forward = False
     reply_flag = False
     form = ForwardReplyForm()
-    app.config['MAIL_USERNAME'] = current_user.email
-    app.config['MAIL_PASSWORD'] = current_user.password
-    app.config['MAIL_DEFAULT_SENDER'] = current_user.email
-    mail = Mail(app)
+    current_app.config['MAIL_USERNAME'] = current_user.email
+    current_app.config['MAIL_PASSWORD'] = current_user.password
+    current_app.config['MAIL_DEFAULT_SENDER'] = current_user.email
+    mail = Mail(current_app)
 
     email = userEmail('', '', '', '', '')
     for user_email in emails:
@@ -157,10 +158,10 @@ def view(uid):
                     msg.recipients = recipients_string.split(",")
                     msg.html = form.compose.body.data
                     msg.subject = form.compose.subject.data
-                    msg.sender = app.config['MAIL_USERNAME']
+                    msg.sender = current_app.config['MAIL_USERNAME']
                     if reply_flag:
                         msg.reply_to = email.sender
-
+                    print(msg.extra_headers)
                     if form.compose.attachment.data.filename:
                         type = guess_type(form.compose.attachment.data.filename)
                         msg.attach(form.compose.attachment.data.filename, str(type), form.compose.attachment.data.read())
@@ -168,23 +169,23 @@ def view(uid):
                     try:
                         mail.send(msg)
                         flash('Success! Your email has been sent.', category='success')
-                        return redirect(url_for('index'))
+                        return redirect(url_for('view.index'))
                     except:
                         flash('An unexpected error occured. Please try again', category='error')
                         print('Whew!', sys.exc_info()[0], 'occurred.')
 
             return render_template('viewEmail.html', form=form, isHTML = email.isHTML, body = email.body, sender = email.sender, receiver = current_user.email, subject = email.subject, uid = email.uid, forward=forward, reply_flag=reply_flag)
-    return redirect(url_for('login'))
+    return redirect(url_for('view.login'))
 
 
-@app.route('/compose', methods=['GET', 'POST'])
+@view.route('/compose', methods=['GET', 'POST'])
 @login_required
 def compose():
     form = ComposeForm()
-    app.config['MAIL_USERNAME'] = current_user.email
-    app.config['MAIL_PASSWORD'] = current_user.password
-    app.config['MAIL_DEFAULT_SENDER'] = current_user.email
-    mail = Mail(app)
+    current_app.config['MAIL_USERNAME'] = current_user.email
+    current_app.config['MAIL_PASSWORD'] = current_user.password
+    current_app.config['MAIL_DEFAULT_SENDER'] = current_user.email
+    mail = Mail(current_app)
 
     if form.validate_on_submit():
         msg = Message()
@@ -193,7 +194,7 @@ def compose():
         msg.recipients = recipients_string.split(",")
         msg.html = form.body.data
         msg.subject = form.subject.data
-        msg.sender = app.config['MAIL_USERNAME']
+        msg.sender = current_app.config['MAIL_USERNAME']
         
         if form.attachment.data.filename:
             type = guess_type(form.attachment.data.filename)
@@ -202,19 +203,19 @@ def compose():
         try:
             mail.send(msg)
             flash('Success! Your email has been sent.', category='success')
-            return redirect(url_for('index'))
+            return redirect(url_for('view.index'))
         except:
             flash('An unexpected error occured. Please try again', category='error')
             print('Whew!', sys.exc_info()[0], 'occurred.')
     return render_template('compose.html', form=form)
 
 
-@app.route('/logout')
+@view.route('/logout')
 @login_required
 def logout():
     emails.clear()
     subjects.clear()
     uids.clear()
     logout_user()
-    return redirect(url_for('login'))
+    return redirect(url_for('view.login'))
 
