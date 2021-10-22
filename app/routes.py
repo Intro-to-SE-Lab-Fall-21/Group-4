@@ -151,7 +151,7 @@ def searchResults(search):
     search1 = ""
     searchResultsSubjs = []
     searchResultsUids = []
-    for email in emails:
+    for email in user_emails.emails:
         subj = email.subject.lower()
         search = search.lower()
         if search in subj:
@@ -161,9 +161,9 @@ def searchResults(search):
     if request.method == 'POST':
         search1 = request.form.get('search')
         if search1:
-            return redirect(url_for('searchResults', search=search1))
+            return redirect(url_for('view.searchResults', search=search1))
         else:
-            return redirect(url_for('index'))
+            return redirect(url_for('view.index'))
     
     return render_template('searchResults.html', search=search, user = current_user.first_name, subjects = searchResultsSubjs, uids = searchResultsUids, length1 = len(searchResultsUids))
 
