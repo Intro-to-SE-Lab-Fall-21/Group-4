@@ -15,7 +15,6 @@ orbs:
 # See: https://circleci.com/docs/2.0/configuration-reference/#jobs
 jobs:
   build:
-    working_directory: ~/circleci-python
     docker:
       - image: cimg/python:3.9.7
     steps:
@@ -25,7 +24,6 @@ jobs:
           pip-dependency-file: requirements.txt # if you have a different name for your requirements file, maybe one that combines your runtime and test requirements.
       - run: python3 main.py
   test:
-    working_directory: ~/circleci-python
     docker:
       - image: cimg/python:3.9.7
     steps:
