@@ -22,7 +22,6 @@ jobs:
       - python/install-packages:
           pkg-manager: pip
           pip-dependency-file: requirements.txt # if you have a different name for your requirements file, maybe one that combines your runtime and test requirements.
-      - run: python3 main.py
   test:
     docker:
       - image: cimg/python:3.9.7
