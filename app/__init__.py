@@ -21,7 +21,7 @@ def create_app():
     from .models import User
 
     login = LoginManager(app)
-    login.login_view = 'login'
+    login.login_view = 'view.login'
     login.init_app(app)
     @login.user_loader
     def load_user(id):
