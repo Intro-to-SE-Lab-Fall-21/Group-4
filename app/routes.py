@@ -45,10 +45,18 @@ def getEmails():
 @view.route('/index/<refresh>', methods=['GET','POST'])
 @login_required
 def index(refresh="False"):
+    search1 = ""
+    if request.method == 'POST':
+        search1 = request.form.get('search')
+        if search1:
+            return redirect(url_for('view.searchResults', search=search1))
+        else:
+            return redirect(url_for('view.index'))
+
     if not user_emails.emails or refresh == "True":
         user_emails.clearAll
         user_emails.getEmails(current_user)
-    return render_template('index.html', user=current_user.first_name, subjects = user_emails.subjects, uids = user_emails.uids, length1 = len(user_emails.subjects))
+    return render_template('index.html', search = 0, user=current_user.first_name, subjects = user_emails.subjects, uids = user_emails.uids, length1 = len(user_emails.subjects))
 
 
 @view.route('/login', methods=['GET', 'POST'])
@@ -97,11 +105,6 @@ def viewEmail(uid):
     forward = False
     reply_flag = False
     form = ForwardReplyForm()
-    current_app.config['MAIL_USERNAME'] = current_user.email
-    current_app.config['MAIL_PASSWORD'] = current_user.password
-    current_app.config['MAIL_DEFAULT_SENDER'] = current_user.email
-    mail = Mail(current_app)
-
 
     email = user_emails.selectEmail(uid)
 
@@ -141,6 +144,28 @@ def compose():
             flash('An unexpected error occured. Please try again', category='error')
             print('Whew!', sys.exc_info()[0], 'occurred.')
     return render_template('compose.html', form=form)
+
+@view.route('/searchResults/<search>', methods=['GET', 'POST'])
+@login_required
+def searchResults(search):
+    search1 = ""
+    searchResultsSubjs = []
+    searchResultsUids = []
+    for email in emails:
+        subj = email.subject.lower()
+        search = search.lower()
+        if search in subj:
+            searchResultsSubjs.append(email.subject)
+            searchResultsUids.append(email.uid)
+
+    if request.method == 'POST':
+        search1 = request.form.get('search')
+        if search1:
+            return redirect(url_for('searchResults', search=search1))
+        else:
+            return redirect(url_for('index'))
+    
+    return render_template('searchResults.html', search=search, user = current_user.first_name, subjects = searchResultsSubjs, uids = searchResultsUids, length1 = len(searchResultsUids))
 
 
 @view.route('/logout')
