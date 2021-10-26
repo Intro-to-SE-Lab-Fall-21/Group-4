@@ -3,7 +3,7 @@ from flask import render_template, request, flash, redirect, url_for, Blueprint,
 from app.forms import ForwardReplyForm, LoginForm, SignupForm, ComposeForm
 from smtplib import SMTP_SSL, SMTPAuthenticationError
 from app import  db
-from .models import User, Emails, send_composed_message, authorize
+from .models import User, Emails, download_attachment, send_composed_message, authorize, userEmail
 from flask_login import current_user, login_user, logout_user, login_required
 from imap_tools import MailBox, AND
 from flask_mail import Message, Mail
@@ -95,6 +95,7 @@ def viewEmail(uid):
     reply_flag = False
     form = ForwardReplyForm()
     email = user_emails.selectEmail(uid)
+    num_of_att = len(email.attachments)
 
     if uid:
         if form.is_submitted():
@@ -104,7 +105,7 @@ def viewEmail(uid):
                 reply_flag = False
                 form.compose.body.data = email.body
                 form.compose.subject.data = 'FW: (' + email.sender + ') ' + email.subject
-                return render_template('viewEmail.html', form=form, isHTML = email.isHTML, body = email.body, sender = email.sender, receiver = current_user.email, subject = email.subject, uid = email.uid, forward=forward, reply_flag=reply_flag)
+                return render_template('viewEmail.html', form=form, isHTML = email.isHTML, body = email.body, sender = email.sender, receiver = current_user.email, subject = email.subject, uid = email.uid, forward=forward, reply_flag=reply_flag, attachments=email.attachments, attachments_length=num_of_att)
 
             # allows the user to reply to emails
             elif form.reply.data:
@@ -112,7 +113,7 @@ def viewEmail(uid):
                 forward = False
                 form.compose.subject.data = email.subject
                 form.compose.email_to.data = email.sender
-                return render_template('viewEmail.html', form=form, isHTML = email.isHTML, body = email.body, sender = email.sender, receiver = current_user.email, subject = email.subject, uid = email.uid, forward=forward, reply_flag=reply_flag)
+                return render_template('viewEmail.html', form=form, isHTML = email.isHTML, body = email.body, sender = email.sender, receiver = current_user.email, subject = email.subject, uid = email.uid, forward=forward, reply_flag=reply_flag, attachments=email.attachments, attachments_length=num_of_att)
 
             # sends the message
             elif form.compose.validate_on_submit():
@@ -120,9 +121,20 @@ def viewEmail(uid):
                 if response is not None:
                     return response
 
-        return render_template('viewEmail.html', form=form, isHTML = email.isHTML, body = email.body, sender = email.sender, receiver = current_user.email, subject = email.subject, uid = email.uid, forward=forward, reply_flag=reply_flag)
+        return render_template('viewEmail.html', form=form, isHTML = email.isHTML, body = email.body, sender = email.sender, receiver = current_user.email, subject = email.subject, uid = email.uid, forward=forward, reply_flag=reply_flag, attachments=email.attachments, attachments_length=num_of_att)
 
     return redirect(url_for('view.login'))
+
+
+# Route to download aa particulat attachment of a particular email (specified by the attachments index in the email)
+@view.route('download/<index>/<uid>')
+def download(index, uid):
+    email = user_emails.selectEmail(uid)
+    index = int(index)
+    attachment = email.attachments[index]
+    download_attachment(attachment)
+    flash('Success! Check your downloads folder', category='success')
+    return redirect(url_for('view.viewEmail', uid=uid))
 
 
 # allows user to compose and edit emails

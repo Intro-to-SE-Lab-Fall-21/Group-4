@@ -9,16 +9,16 @@ from flask_migrate import Migrate
 db = SQLAlchemy()
 
 def create_app():
+    from .models import User, download_attachment
     app = Flask(__name__)
     app.config.from_object(Config)
     db.init_app(app)
     migrate = Migrate(app, db)
+    app.jinja_env.globals.update(download_attachment=download_attachment)
 
     from .routes import view
 
     app.register_blueprint(view, url_prefix='/')
-
-    from .models import User
 
     login = LoginManager(app)
     login.login_view = 'view.login'
