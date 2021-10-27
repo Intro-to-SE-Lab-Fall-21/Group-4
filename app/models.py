@@ -49,18 +49,22 @@ class Emails():
         email = user.email
         pwd = user.password
         with MailBox('imap.gmail.com').login(email, pwd, 'INBOX') as mailbox:
-            uids = [msg.uid for msg in mailbox.fetch(reverse=True)]
-            bodies = [msg.text for msg in mailbox.fetch(reverse=True)]
-            bodiesHTML = [msg.html for msg in mailbox.fetch(reverse=True)]
-            subjects = [msg.subject for msg in mailbox.fetch(reverse=True)]
-            senders = [msg.from_ for msg in mailbox.fetch(reverse=True)]
             attachments = []
-            for msg in mailbox.fetch(reverse=True):
+            bodies = []
+            bodiesHTML = []
+            subjects = []
+            senders = []
+            uids = []
+            for msg in mailbox.fetch(reverse=True, bulk=True):
                 found_att = []
                 for att in msg.attachments:
                     found_att.append(att)
                 attachments.append(found_att)
-            
+                bodies.append(msg.text)
+                bodiesHTML.append(msg.html)
+                subjects.append(msg.subject)
+                senders.append(msg.from_)
+                uids.append(msg.uid)
 
             for i in range(len(subjects)):
                 email = userEmail(uids[i], subjects[i], bodiesHTML[i], senders[i], False, attachments[i]) 
