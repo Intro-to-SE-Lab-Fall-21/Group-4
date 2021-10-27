@@ -78,9 +78,6 @@ class Emails():
                 self.emails.append(email)
                 self.uids.append(email.uid)
                 self.subjects.append(email.subject)
-            for email in self.emails:
-                for attachment in email.attachments:
-                    print(attachment.filename)
 
     
     # Selects a particular email (based on uid) in the emails list.
@@ -161,10 +158,9 @@ def get_download_path(filename):
         downloads_guid = '{374DE290-123F-4565-9164-39C4925E467B}'
         with winreg.OpenKey(winreg.HKEY_CURRENT_USER, sub_key) as key:
             location = winreg.QueryValueEx(key, downloads_guid)[0]
-        return location + '\\' + file
+        return location + '\\' + filename
     else:
         return os.path.join(os.path.expanduser('~'), 'downloads/' + filename)
-
 
 # Function to download a particular file. Takes an attachment object 
 def download_attachment(attachment):
