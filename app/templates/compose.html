@@ -1,0 +1,34 @@
+{% extends "base.html" %} {% block content %}
+<h1 align="center">Compose</h1>
+<div class="container">
+  <form action="" method="post" novalidate enctype="multipart/form-data">
+    {{ form.hidden_tag() }}
+    <p>
+      {{ form.email_to.label }} <br />
+      {{ form.email_to(size=64, class="form-control")}} {% for error in
+      form.email_to.errors %}
+      <span>[{{ error }}]</span>
+      {% endfor %}
+    </p>
+    <p>
+      {{ form.subject.label }} <br />
+      {{ form.subject(size=60, class="form-control")}} {% for error in
+      form.subject.errors %}
+      <span>[{{ error }}]</span>
+      {% endfor %}
+    </p>
+    <p>
+      {{ form.body.label}} <br />
+      {{ form.body(rows=20, class="form-control", id="mytextarea")}} {% for
+      error in form.body.errors %}
+      <span>[{{ error }}]</span>
+      {% endfor %}
+    </p>
+    <p>
+      {{ form.attachment.label }} <br />
+      {{ form.attachment() }}
+    </p>
+    <p>{{ form.submit(class="btn btn-primary") }}</p>
+  </form>
+</div>
+{% endblock %}
