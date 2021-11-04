@@ -1,5 +1,17 @@
 {% extends "base.html" %} {% block content %}
 <h1 align="center">{{ note.title }}</h1>
+<ul class="list-group list-group-flush" id="view-deleted">
+  <li>
+    <span style="float: left">
+      <a
+        href="{{ url_for('view.notes', user=user) }}"
+        class="btn btn-info"
+        role="button"
+        >Back to Notes</a
+      >
+    </span>
+  </li>
+</ul>
 <br />
 <br />
 <form method="POST">

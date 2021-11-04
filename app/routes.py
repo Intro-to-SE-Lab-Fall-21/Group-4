@@ -189,6 +189,13 @@ def notes():
     return render_template("notes.html", user=current_user)
 
 
+# Deleted-notes Route: Displays the nots the user has deleted
+@view.route('/deleted-notes', methods=['GET', 'POST'])
+@login_required
+def deletedNotes():
+    return render_template("deleted-notes.html", user=current_user)
+
+
 # View-Note Route: Displays a particular note for editing
 @view.route('/edit-note/<id>', methods=['GET', 'POST'])
 @login_required
@@ -220,7 +227,7 @@ def addNote():
         if len(data) < 1:
             flash('Note is too short!', category='error')
         else:
-            new_note = Note(data=data, title=title, user_id=current_user.id)
+            new_note = Note(data=data, title=title, deleted=False, user_id=current_user.id)
             db.session.add(new_note)
             db.session.commit()
             flash('Note added!', category='success')
@@ -233,9 +240,29 @@ def deleteNote(id):
     note = Note.query.get(id)
     if note:
         if note.user_id == current_user.id:
-            db.session.delete(note)
-            db.session.commit()
+            if note.deleted == True:
+                flash('Note permanently deleted!', category='success')
+                db.session.delete(note)
+                db.session.commit()
+                return redirect(url_for('view.deletedNotes', user=current_user))
+            else:
+                note.deleted = True
+                flash('Note deleted!', category='success')
+                db.session.commit()
     return redirect(url_for('view.notes', user=current_user))
+
+
+# Route to recover deleted notes 
+@view.route('/recover-note/<id>')
+def recoverNote(id):
+    note = Note.query.get(id)
+    if note:
+        if note.user_id == current_user.id:
+            note.deleted = False
+            flash('Note recovered!', category='success')
+            db.session.commit()
+    return redirect(url_for('view.deletedNotes', user=current_user))
+
 
 # logs the user out
 @view.route('/logout')

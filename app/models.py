@@ -31,6 +31,7 @@ class Note(db.Model):
     title = db.Column(db.String(255))
     data = db.Column(db.String(10000))
     date = db.Column(db.DateTime(timezone=True), default=func.now())
+    deleted = db.Column(db.Boolean)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
 
 

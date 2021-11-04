@@ -1,20 +1,19 @@
 {% extends "base.html" %} {% block content %}
-<h1 align="center">Notes</h1>
-<ul class="list-group list-group-flush" id="view-deleted">
+<h1 align="center">Deleted Notes</h1>
+<ul class="list-group list-group-flush" id="view-all">
   <li>
-    <span style="float: right">
+    <span style="float: left">
       <a
-        href="{{ url_for('view.deletedNotes', user=user) }}"
+        href="{{ url_for('view.notes', user=user) }}"
         class="btn btn-info"
         role="button"
-        >View Deleted Notes</a
+        >Back to All Notes</a
       >
     </span>
   </li>
 </ul>
-<br />
 <ul class="list-group list-group-flush" id="notes">
-  {% for note in user.notes %} {% if note.deleted == False %}
+  {% for note in user.notes %} {% if note.deleted == True %}
   <br />
   <li class="list-group-item">
     <div p-3 mb-2 bg-white text-dark>
@@ -24,16 +23,16 @@
       <p>
         <span style="float: right">
           <a
-            href="{{ url_for('view.editNote', id=note.id) }}"
-            class="btn btn-primary"
+            href="{{ url_for('view.recoverNote', id=note.id) }}"
+            class="btn btn-success"
             role="button"
-            >Edit</a
+            >Recover</a
           >
           <a
             href="{{ url_for('view.deleteNote', id=note.id) }}"
             class="btn btn-danger"
             role="button"
-            >Delete</a
+            >Delete Permanently</a
           >
         </span>
       </p>
@@ -41,16 +40,4 @@
   </li>
   {% endif %} {% endfor %}
 </ul>
-
-<br />
-<div align="center">
-  <a
-    href="{{ url_for('view.addNote', user=user) }}"
-    class="btn btn-primary"
-    role="button"
-    >New Note</a
-  >
-</div>
-<br />
-<br />
 {% endblock %}
