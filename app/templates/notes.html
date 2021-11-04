@@ -1,0 +1,36 @@
+{% extends "base.html" %} {% block content %}
+<h1 align="center">Notes</h1>
+<ul class="list-group list-group-flush" id="notes">
+  {% for note in user.notes %}
+  <br>
+  <li class="list-group-item">
+    <div p-3 mb-2 bg-white text-dark>
+    <h4 style="display:inline">Title: </h4><h5 style="display:inline">{{ note.title }}</h5> 
+    <span style="float: right">{{ note.date }}</span> {{ note.data |safe}}
+    <p>
+    <span style="float: right">
+      <a
+        href="{{ url_for('view.editNote', id=note.id) }}"
+        class="btn btn-primary"
+        role="button"
+        >Edit</a
+      >
+      <a
+        href="{{ url_for('view.deleteNote', id=note.id) }}"
+        class="btn btn-danger"
+        ,
+        role="button"
+        >Delete</a
+      >
+    </span>
+    </p>
+</div>
+  </li>
+  {% endfor %}
+</ul>
+
+  <br />
+  <div align="center">
+    <a href="{{ url_for('view.addNote', user=user) }}" class="btn btn-primary" role="button">New Note</button>
+  </div>
+{% endblock %}

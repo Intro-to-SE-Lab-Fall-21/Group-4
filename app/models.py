@@ -6,6 +6,7 @@ from flask_mail import Message, Mail
 from bs4 import BeautifulSoup
 from mimetypes import guess_type
 from smtplib import SMTPAuthenticationError, SMTP_SSL
+from sqlalchemy.sql import func
 import os
 
 # User SQLAlchemy class for database management
@@ -15,6 +16,7 @@ class User(db.Model, UserMixin):
     password = db.Column(db.String(30))
     first_name = db.Column(db.String(40))
     last_name = db.Column(db.String(40))
+    notes = db.relationship('Note')
 
     # Function to check user password against an entered password.
     def check_password(self, password):
@@ -22,6 +24,14 @@ class User(db.Model, UserMixin):
             return True
         else:
             return False
+
+# Note SQLAlchemy class for database managementx
+class Note(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    title = db.Column(db.String(255))
+    data = db.Column(db.String(10000))
+    date = db.Column(db.DateTime(timezone=True), default=func.now())
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
 
 
 # Class to contain the email information relevant for our client.
