@@ -20,78 +20,66 @@
   {% endfor %}
 </div>
 <br />
-{% if forward==False %}
-  <form action="" method="post"><p>{{ form.forward(class="btn btn-primary" ) }}</p></form>
-{% endif %} {% if reply_flag==False %}
-<form action="" method="post"><p>{{ form.reply(class="btn btn-primary") }}</p></form>
+{% if forward=="False" %}
+  <a  href="{{ url_for('view.viewEmail', uid=uid, forward=True, reply_flag=False)}}" class="btn btn-primary">Forward</a>
+{% endif %} {% if reply_flag=="False" %}
+<a  href="{{ url_for('view.viewEmail', uid=uid, forward=False, reply_flag=True)}}" class="btn btn-primary">Reply</a>
 {% endif %} 
 
-{% if forward==True %}
+{% if forward=="True" or reply_flag=="True" %}
+{% if forward=="True"%}
 <h1 align="left"><b>Forward:</h1>
+  {% endif %}
+  {% if reply_flag=="True" %}
+  <h1 align="left"><b>Reply:</h1>
+  {% endif %}
   <div class="container">
     <form action="" method="post" novalidate enctype="multipart/form-data">
-      {{ form.compose.hidden_tag() }}
+      {{ form.hidden_tag() }}
       <p>
-        {{ form.compose.email_to.label }} <br />
-        {{ form.compose.email_to(size=10, class="form-control")}} {% for error in
-        form.compose.email_to.errors %}
+        {{ form.email_to.label }} <br />
+        {{ form.email_to(size=10, class="form-control")}} {% for error in
+        form.email_to.errors %}
         <span>[{{ error }}]</span>
         {% endfor %}
       </p>
       <p>
-        {{ form.compose.subject.label }} <br />
-        {{ form.compose.subject(size=60, class="form-control")}} {% for error in
-        form.compose.subject.errors %}
+        {{ form.subject.label }} <br />
+        {{ form.subject(size=60, class="form-control")}} {% for error in
+        form.subject.errors %}
         <span>[{{ error }}]</span>
         {% endfor %}
       </p>
       <p>
-        {{ form.compose.body.label}} <br />
-        {{ form.compose.body(rows=20, class="form-control", id="mytextarea")}} {% for
-        error in form.compose.body.errors %}
+        {{ form.body.label}} <br />
+        {{ form.body(rows=20, class="form-control", id="mytextarea")}} {% for
+        error in form.body.errors %}
         <span>[{{ error }}]</span>
         {% endfor %}
       </p>
       <p>
-        {{ form.compose.attachment.label }} <br />
-        {{ form.compose.attachment() }}
+        <div class="form-group">
+          <label for="note" class="col-md-2 control-label">Notes</label>
+            <div class="input-group">
+             <select name="note" id="note" class="form-select">
+              <option value="None">Select a note to import</option>
+             {% for note in user.notes %} {% if note.deleted == False%}
+             {% set date = note.date ~ '/' %}
+             {% set date = date.split(" ") %}
+             <option value="{{note.id}}">{{note.title}} &nbsp;&nbsp;&nbsp;&nbsp; Created: {{date[0]}}</option>
+             {% endif %}{% endfor %}
+             </select>
+           <div class="input-group-addon input-group-button">
+            <input type="submit" value="importNote" class="btn btn-primary" />
+           </div>
+          </div>
+        </div>
       </p>
-      <p>{{ form.compose.submit(class="btn btn-primary") }}</p>
+      <p>
+        {{ form.attachment.label }} <br />
+        {{ form.attachment() }}
+      </p>
+      <p>{{ form.submit(class="btn btn-primary") }}</p>
     </form>
   </div>
-
-{% elif reply_flag==True %} 
-<h1 align="left"><b>Reply:</h1>
-  <div class="container">
-    <form action="" method="post" novalidate enctype="multipart/form-data">
-      {{ form.compose.hidden_tag() }}
-      <p>
-        {{ form.compose.email_to.label }} <br />
-        {{ form.compose.email_to(size=64, class="form-control")}} {% for error in
-        form.compose.email_to.errors %}
-        <span>[{{ error }}]</span>
-        {% endfor %}
-      </p>
-      <p>
-        {{ form.compose.subject.label }} <br />
-        {{ form.compose.subject(size=60, class="form-control")}} {% for error in
-        form.compose.subject.errors %}
-        <span>[{{ error }}]</span>
-        {% endfor %}
-      </p>
-      <p>
-        {{ form.compose.body.label}} <br />
-        {{ form.compose.body(rows=20, class="form-control", id="mytextarea")}} {% for
-        error in form.compose.body.errors %}
-        <span>[{{ error }}]</span>
-        {% endfor %}
-      </p>
-      <p>
-        {{ form.compose.attachment.label }} <br />
-        {{ form.compose.attachment() }}
-      </p>
-      <p>{{ form.compose.submit(class="btn btn-primary") }}</p>
-    </form>
-  </div> 
-  {% endif %}
-{% endblock %}
+{% endif %} {% endblock %}
