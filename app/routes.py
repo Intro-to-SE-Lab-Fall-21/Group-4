@@ -3,7 +3,7 @@ from flask import render_template, request, flash, redirect, url_for, Blueprint,
 from app.forms import ForwardReplyForm, LoginForm, SignupForm, ComposeForm
 from smtplib import SMTP_SSL, SMTPAuthenticationError
 from app import  db
-from .models import User, Emails, download_attachment, send_composed_message, authorize, userEmail
+from .models import Note, User, Emails, download_attachment, send_composed_message, authorize, userEmail
 from flask_login import current_user, login_user, logout_user, login_required
 from imap_tools import MailBox, AND
 from flask_mail import Message, Mail
@@ -180,6 +180,88 @@ def searchResults(search):
             return redirect(url_for('view.index'))
     
     return render_template('searchResults.html', search=search, user = current_user.first_name, subjects = searchResultsSubjs, uids = searchResultsUids, length1 = len(searchResultsUids))
+
+
+# Note route: Displays the user's notes, allows the user to add/edit/delete notes.
+@view.route('/notes', methods=['GET', 'POST'])
+@login_required
+def notes():
+    return render_template("notes.html", user=current_user)
+
+
+# Deleted-notes Route: Displays the nots the user has deleted
+@view.route('/deleted-notes', methods=['GET', 'POST'])
+@login_required
+def deletedNotes():
+    return render_template("deleted-notes.html", user=current_user)
+
+
+# View-Note Route: Displays a particular note for editing
+@view.route('/edit-note/<id>', methods=['GET', 'POST'])
+@login_required
+def editNote(id):
+    note = Note.query.get(id)
+    if request.method == 'POST':
+        new_data = request.form.get('note')
+        new_title = request.form.get('title')
+        
+        if len(new_data) < 1:
+            flash('Note body is too short!', category='error')
+        elif len(new_title) < 1:
+            flash('Note title is too short!', category='error')
+        else:
+            note.title = new_title
+            note.data = new_data
+            db.session.commit()
+            flash('Note updated!', category='success')
+            return redirect(url_for('view.notes', user=current_user))
+    return render_template("edit-note.html", user=current_user, id=id, note=note)
+
+
+@view.route('/add-note', methods=['GET', 'POST'])
+def addNote():
+    if request.method == 'POST':
+        data = request.form.get('note')
+        title = request.form.get('title')
+
+        if len(data) < 1:
+            flash('Note is too short!', category='error')
+        else:
+            new_note = Note(data=data, title=title, deleted=False, user_id=current_user.id)
+            db.session.add(new_note)
+            db.session.commit()
+            flash('Note added!', category='success')
+            return redirect(url_for('view.notes', user=current_user))
+    return render_template("add-note.html", user=current_user)
+
+
+@view.route('/delete-note/<id>')
+def deleteNote(id):
+    note = Note.query.get(id)
+    if note:
+        if note.user_id == current_user.id:
+            if note.deleted == True:
+                flash('Note permanently deleted!', category='success')
+                db.session.delete(note)
+                db.session.commit()
+                return redirect(url_for('view.deletedNotes', user=current_user))
+            else:
+                note.deleted = True
+                flash('Note deleted!', category='success')
+                db.session.commit()
+    return redirect(url_for('view.notes', user=current_user))
+
+
+# Route to recover deleted notes 
+@view.route('/recover-note/<id>')
+def recoverNote(id):
+    note = Note.query.get(id)
+    if note:
+        if note.user_id == current_user.id:
+            note.deleted = False
+            flash('Note recovered!', category='success')
+            db.session.commit()
+    return redirect(url_for('view.deletedNotes', user=current_user))
 
 
 # logs the user out
