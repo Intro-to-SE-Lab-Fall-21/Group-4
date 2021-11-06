@@ -22,7 +22,8 @@ class ComposeForm(FlaskForm):
     submit = SubmitField('Send Message')
     attachment = FileField('Attachments')
 
-class ForwardReplyForm(FlaskForm):
+class ForwardReplyTrashForm(FlaskForm):
+    trash = SubmitField('Move To Trash')
     forward = SubmitField('Forward')
     reply = SubmitField('Reply')
     compose = FormField(ComposeForm)

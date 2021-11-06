@@ -1,6 +1,6 @@
 from os import error
 from flask import render_template, request, flash, redirect, url_for, Blueprint, current_app
-from app.forms import ForwardReplyForm, LoginForm, SignupForm, ComposeForm
+from app.forms import ForwardReplyTrashForm, LoginForm, SignupForm, ComposeForm
 from smtplib import SMTP_SSL, SMTPAuthenticationError
 from app import  db
 from .models import Note, User, Emails, download_attachment, send_composed_message, authorize, userEmail
@@ -13,6 +13,7 @@ from bs4 import BeautifulSoup
 
 view = Blueprint('view', __name__)
 user_emails = Emails()
+user_deleted_emails = Emails()
 
 # loads in the user's emails and displays links to read them
 @view.route('/', methods=['GET', 'POST'])
@@ -32,10 +33,17 @@ def index(refresh="False"):
 
     # adds refresh functionality to reload all the emails
     if not user_emails.emails or refresh == "True":
-        user_emails.clearAll
-        user_emails.getEmails(current_user)
+        user_emails.clearAll()
+        user_deleted_emails.clearAll()
+        user_emails.getEmails(current_user, 'INBOX')
+        user_deleted_emails.getEmails(current_user, '[Gmail]/Trash')
+    return render_template('index.html', search = 0, deleted = False, user=current_user.first_name, subjects = user_emails.subjects, uids = user_emails.uids, length1 = len(user_emails.subjects))
+    
 
-    return render_template('index.html', search = 0, user=current_user.first_name, subjects = user_emails.subjects, uids = user_emails.uids, length1 = len(user_emails.subjects))
+@view.route('/trash', methods=['GET', 'POST'])
+@login_required
+def trash():
+    return render_template('index.html', search = 0, deleted = True, subjects = user_deleted_emails.subjects, uids = user_deleted_emails.uids, length1 = len(user_deleted_emails.subjects))
 
 
 # handles login for the user
@@ -88,24 +96,31 @@ def sign_up():
 
 
 # views specific emails
-@view.route('/viewEmail/<uid>', methods=['GET', 'POST'])
+@view.route('/viewEmail/<uid>/<deleted>', methods=['GET', 'POST'])
 @login_required
-def viewEmail(uid):
+def viewEmail(uid, deleted=False):
     forward = False
     reply_flag = False
-    form = ForwardReplyForm()
-    email = user_emails.selectEmail(uid)
+    form = ForwardReplyTrashForm()
+    if deleted == 'False':
+        email = user_emails.selectEmail(uid)
+    else:
+        email = user_deleted_emails.selectEmail(uid)
+
     num_of_att = len(email.attachments)
 
     if uid:
         if form.is_submitted():
+            if form.trash.data:
+                user_emails.moveToTrash(current_user, uid)
+                return redirect(url_for('view.index', refresh=True))
             # allows the user to forward their email
             if form.forward.data:
                 forward = True
                 reply_flag = False
                 form.compose.body.data = email.body
                 form.compose.subject.data = 'FW: (' + email.sender + ') ' + email.subject
-                return render_template('viewEmail.html', form=form, isHTML = email.isHTML, body = email.body, sender = email.sender, receiver = current_user.email, subject = email.subject, uid = email.uid, forward=forward, reply_flag=reply_flag, attachments=email.attachments, attachments_length=num_of_att)
+                return render_template('viewEmail.html', form=form, deleted=deleted, isHTML = email.isHTML, body = email.body, sender = email.sender, receiver = current_user.email, subject = email.subject, uid = email.uid, forward=forward, reply_flag=reply_flag, attachments=email.attachments, attachments_length=num_of_att)
 
             # allows the user to reply to emails
             elif form.reply.data:
@@ -121,20 +136,23 @@ def viewEmail(uid):
                 if response is not None:
                     return response
 
-        return render_template('viewEmail.html', form=form, isHTML = email.isHTML, body = email.body, sender = email.sender, receiver = current_user.email, subject = email.subject, uid = email.uid, forward=forward, reply_flag=reply_flag, attachments=email.attachments, attachments_length=num_of_att)
+        return render_template('viewEmail.html', deleted=deleted, form=form, isHTML = email.isHTML, body = email.body, sender = email.sender, receiver = current_user.email, subject = email.subject, uid = email.uid, forward=forward, reply_flag=reply_flag, attachments=email.attachments, attachments_length=num_of_att)
 
     return redirect(url_for('view.login'))
 
 
 # Route to download aa particulat attachment of a particular email (specified by the attachments index in the email)
-@view.route('download/<index>/<uid>')
-def download(index, uid):
-    email = user_emails.selectEmail(uid)
+@view.route('download/<index>/<uid>/<deleted>')
+def download(index, uid, deleted=False):
+    if deleted == "False":
+        email = user_emails.selectEmail(uid)
+    else:
+        email = user_deleted_emails.selectEmail(uid)
     index = int(index)
     attachment = email.attachments[index]
     download_attachment(attachment)
     flash('Success! Check your downloads folder', category='success')
-    return redirect(url_for('view.viewEmail', uid=uid))
+    return redirect(url_for('view.viewEmail', uid=uid, deleted=deleted))
 
 
 # allows user to compose and edit emails
@@ -263,12 +281,12 @@ def recoverNote(id):
             db.session.commit()
     return redirect(url_for('view.deletedNotes', user=current_user))
 
-
 # logs the user out
 @view.route('/logout')
 @login_required
 def logout():
     user_emails.clearAll()
+    user_deleted_emails.clearAll()
     logout_user()
     return redirect(url_for('view.login'))
 

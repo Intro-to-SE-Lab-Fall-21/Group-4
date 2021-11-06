@@ -7,24 +7,32 @@
     Body: <br />
   </p>
   {% if isHTML %}
-  <p>{{ body |safe }}</p>
+    <p>{{ body |safe }}</p>
   {% else %}
-  <pre
-    style="white-space: pre-wrap"
-  ><span style="font-family: Arial, Helvetica, sans-serif; font-size: 16px" >{{ body }}</span></pre>
+    <pre
+      style="white-space: pre-wrap"
+    ><span style="font-family: Arial, Helvetica, sans-serif; font-size: 16px" >{{ body }}</span></pre>
 </div>
 {% endif %} <br />
   <div class="container">
   {% for i in range(attachments_length) %}
-  <a href="{{ url_for('view.download', index=i, uid=uid) }}" class="link-dark m-2">{{ attachments[i].filename.replace(' ', '_')}}</a>
+  <a href="{{ url_for('view.download', index=i, uid=uid, deleted=deleted) }}" class="link-dark m-2">{{ attachments[i].filename.replace(' ', '_')}}</a>
   {% endfor %}
 </div>
 <br />
 {% if forward==False %}
-  <form action="" method="post"><p>{{ form.forward(class="btn btn-primary" ) }}</p></form>
-{% endif %} {% if reply_flag==False %}
-<form action="" method="post"><p>{{ form.reply(class="btn btn-primary") }}</p></form>
+  <form action="" method="post"><p>{{ form.forward(class="btn btn-primary") }}</p></form>
 {% endif %} 
+{% if reply_flag==False %}
+  <form action="" method="post"><p>{{ form.reply(class="btn btn-primary") }}</p></form>
+{% endif %} 
+
+{% if deleted=='False' %}
+<form action="" method="post" novalidate>
+  {{ form.hidden_tag() }}
+  <p>{{ form.trash(class="btn btn-primary") }}</p>
+</form>
+{% endif %}
 
 {% if forward==True %}
 <h1 align="left"><b>Forward:</h1>
