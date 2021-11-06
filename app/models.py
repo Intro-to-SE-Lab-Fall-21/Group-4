@@ -97,6 +97,18 @@ class Emails():
         pwd = user.password
         with MailBox('imap.gmail.com').login(email, pwd) as mailbox:
             mailbox.move(uid, '[Gmail]/Trash')
+
+    def removeFromTrash(self, user, uid):
+        email = user.email
+        pwd = user.password
+        with MailBox('imap.gmail.com').login(email, pwd, initial_folder='[Gmail]/Trash') as mailbox:
+            mailbox.move(uid, 'INBOX')
+    
+    def deleteEmail(self, user, uid):
+        email = user.email
+        pwd = user.password
+        with MailBox('imap.gmail.com').login(email, pwd, initial_folder='[Gmail]/Trash') as mailbox:
+            mailbox.delete(uid)
     
     # Selects a particular email (based on uid) in the emails list.
     def selectEmail(self, uid):

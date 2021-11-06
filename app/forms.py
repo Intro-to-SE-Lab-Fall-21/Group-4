@@ -24,6 +24,8 @@ class ComposeForm(FlaskForm):
 
 class ForwardReplyTrashForm(FlaskForm):
     trash = SubmitField('Move To Trash')
+    untrash = SubmitField('Remove From Trash')
+    delete = SubmitField('Delete Permanently')
     forward = SubmitField('Forward')
     reply = SubmitField('Reply')
     compose = FormField(ComposeForm)

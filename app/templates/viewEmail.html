@@ -34,6 +34,14 @@
 </form>
 {% endif %}
 
+{% if deleted=='True' %}
+<form action="" method="post" novalidate>
+  {{ form.hidden_tag() }}
+  <p>{{ form.untrash(class="btn btn-primary") }}</p>
+  <p>{{ form.delete(class="btn btn-primary") }}</p>
+</form>
+{% endif %}
+
 {% if forward==True %}
 <h1 align="left"><b>Forward:</h1>
   <div class="container">

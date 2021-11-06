@@ -1,4 +1,5 @@
 from os import error
+import re
 from flask import render_template, request, flash, redirect, url_for, Blueprint, current_app
 from app.forms import ForwardReplyTrashForm, LoginForm, SignupForm, ComposeForm
 from smtplib import SMTP_SSL, SMTPAuthenticationError
@@ -26,7 +27,7 @@ def index(refresh="False"):
     if request.method == 'POST':
         searchQuery = request.form.get('search')
         if searchQuery:
-            return redirect(url_for('view.searchResults', search=searchQuery))
+            return redirect(url_for('view.searchResults', search=searchQuery, deleted=False))
 
         else:
             return redirect(url_for('view.index'))
@@ -40,10 +41,26 @@ def index(refresh="False"):
     return render_template('index.html', search = 0, deleted = False, user=current_user.first_name, subjects = user_emails.subjects, uids = user_emails.uids, length1 = len(user_emails.subjects))
     
 
-@view.route('/trash', methods=['GET', 'POST'])
+@view.route('/trash/<refresh>', methods=['GET', 'POST'])
 @login_required
-def trash():
-    return render_template('index.html', search = 0, deleted = True, subjects = user_deleted_emails.subjects, uids = user_deleted_emails.uids, length1 = len(user_deleted_emails.subjects))
+def trash(refresh=False):
+    searchQuery = ""
+
+    # checks to see if the user searches through the emails
+    if request.method == 'POST':
+        searchQuery = request.form.get('search')
+        if searchQuery:
+            return redirect(url_for('view.searchResults', search=searchQuery, deleted=True))
+
+        else:
+            return redirect(url_for('view.index'))
+
+    if not user_emails.emails or refresh == "True":
+        user_emails.clearAll()
+        user_deleted_emails.clearAll()
+        user_emails.getEmails(current_user, 'INBOX')
+        user_deleted_emails.getEmails(current_user, '[Gmail]/Trash')
+    return render_template('trash.html', search = 0, deleted = True, subjects = user_deleted_emails.subjects, uids = user_deleted_emails.uids, length1 = len(user_deleted_emails.subjects))
 
 
 # handles login for the user
@@ -114,6 +131,13 @@ def viewEmail(uid, deleted=False):
             if form.trash.data:
                 user_emails.moveToTrash(current_user, uid)
                 return redirect(url_for('view.index', refresh=True))
+            if form.untrash.data:
+                user_deleted_emails.removeFromTrash(current_user, uid)
+                return redirect(url_for('view.trash', refresh=True))
+            if form.delete.data:
+                user_deleted_emails.deleteEmail(current_user, uid)
+                return redirect(url_for('view.trash', refresh=True))
+
             # allows the user to forward their email
             if form.forward.data:
                 forward = True
@@ -175,19 +199,27 @@ def compose():
 
 
 # shows search results
-@view.route('/searchResults/<search>', methods=['GET', 'POST'])
+@view.route('/searchResults/<search>/<deleted>', methods=['GET', 'POST'])
 @login_required
-def searchResults(search):
+def searchResults(search, deleted=False):
     searchQuery = ""
     searchResultsSubjs = []
     searchResultsUids = []
     # loops through emails and finds ones with matching subjects
-    for email in user_emails.emails:
-        subj = email.subject.lower()
-        search = search.lower()
-        if search in subj:
-            searchResultsSubjs.append(email.subject)
-            searchResultsUids.append(email.uid)
+    if deleted == 'False':
+        for email in user_emails.emails:
+            subj = email.subject.lower()
+            search = search.lower()
+            if search in subj:
+                searchResultsSubjs.append(email.subject)
+                searchResultsUids.append(email.uid)
+    else:
+        for email in user_deleted_emails.emails:
+            subj = email.subject.lower()
+            search = search.lower()
+            if search in subj:
+                searchResultsSubjs.append(email.subject)
+                searchResultsUids.append(email.uid)
 
     # allows the user to search from this page too
     if request.method == 'POST':
@@ -197,7 +229,7 @@ def searchResults(search):
         else:
             return redirect(url_for('view.index'))
     
-    return render_template('searchResults.html', search=search, user = current_user.first_name, subjects = searchResultsSubjs, uids = searchResultsUids, length1 = len(searchResultsUids))
+    return render_template('searchResults.html', deleted=deleted, search=search, user = current_user.first_name, subjects = searchResultsSubjs, uids = searchResultsUids, length1 = len(searchResultsUids))
 
 
 # Note route: Displays the user's notes, allows the user to add/edit/delete notes.
