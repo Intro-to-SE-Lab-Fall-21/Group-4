@@ -1,5 +1,4 @@
 from os import error
-import re
 from flask import render_template, request, flash, redirect, url_for, Blueprint, current_app
 from app.forms import ForwardReplyTrashForm, LoginForm, SignupForm, ComposeForm
 from smtplib import SMTP_SSL, SMTPAuthenticationError
@@ -43,7 +42,7 @@ def index(refresh="False"):
 
 @view.route('/trash/<refresh>', methods=['GET', 'POST'])
 @login_required
-def trash(refresh=False):
+def trash(refresh="False"):
     searchQuery = ""
 
     # checks to see if the user searches through the emails
@@ -53,7 +52,7 @@ def trash(refresh=False):
             return redirect(url_for('view.searchResults', search=searchQuery, deleted=True))
 
         else:
-            return redirect(url_for('view.index'))
+            return redirect(url_for('view.trash', refresh='False'))
 
     if not user_emails.emails or refresh == "True":
         user_emails.clearAll()
@@ -115,7 +114,7 @@ def sign_up():
 # views specific emails
 @view.route('/viewEmail/<uid>/<deleted>', methods=['GET', 'POST'])
 @login_required
-def viewEmail(uid, deleted=False):
+def viewEmail(uid, deleted="False"):
     forward = False
     reply_flag = False
     form = ForwardReplyTrashForm()
@@ -167,7 +166,7 @@ def viewEmail(uid, deleted=False):
 
 # Route to download aa particulat attachment of a particular email (specified by the attachments index in the email)
 @view.route('download/<index>/<uid>/<deleted>')
-def download(index, uid, deleted=False):
+def download(index, uid, deleted="False"):
     if deleted == "False":
         email = user_emails.selectEmail(uid)
     else:
@@ -201,7 +200,7 @@ def compose():
 # shows search results
 @view.route('/searchResults/<search>/<deleted>', methods=['GET', 'POST'])
 @login_required
-def searchResults(search, deleted=False):
+def searchResults(search, deleted="False"):
     searchQuery = ""
     searchResultsSubjs = []
     searchResultsUids = []
