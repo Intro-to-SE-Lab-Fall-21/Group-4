@@ -67,7 +67,7 @@ def test_html_logged_out(client):
     assert res.status_code == 302
     res = client.get('/compose')
     assert res.status_code == 302
-    res = client.get('/viewEmail/<1>')
+    res = client.get('/viewEmail/<1>/False/False')
     assert res.status_code == 302
     res = client.get('/logout')
     assert res.status_code == 302
@@ -90,8 +90,8 @@ def test_login_user(client):
 '''
 # This tests the function SelectEmails() function within the Emails class works.
 def test_select_emails(inbox):
-    selected_email = inbox.selectEmail(5)
-    assert 'This is' in selected_email.body
+    selected_email = inbox.selectEmail(9)
+    assert 'I was wondering' in selected_email.body
     selected_email = inbox.selectEmail(5000)
     assert selected_email == 'Failed'
 
