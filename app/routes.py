@@ -32,7 +32,7 @@ def index(refresh="False"):
 
     # adds refresh functionality to reload all the emails
     if not user_emails.emails or refresh == "True":
-        user_emails.clearAll
+        user_emails.clearAll()
         user_emails.getEmails(current_user)
 
     return render_template('index.html', search = 0, user=current_user.first_name, subjects = user_emails.subjects, uids = user_emails.uids, length1 = len(user_emails.subjects))
