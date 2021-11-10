@@ -25,8 +25,26 @@
       {% endfor %}
     </p>
     <p>
+      <div class="form-group">
+        <label for="note" class="col-md-2 control-label">Notes</label>
+          <div class="input-group">
+           <select name="note" id="note" class="form-select">
+            <option value="None">Select a note to import</option>
+           {% for note in user.notes %} {% if note.deleted == False%}
+           {% set date = note.date ~ '/' %}
+           {% set date = date.split(" ") %}
+           <option value="{{note.id}}">{{note.title}} &nbsp;&nbsp;&nbsp;&nbsp; Created: {{date[0]}}</option>
+           {% endif %}{% endfor %}
+           </select>
+         <div class="input-group-addon input-group-button">
+          <input type="submit" value="importNote" class="btn btn-primary" />
+         </div>
+        </div>
+      </div>
+    </p>
+    <p>
       {{ form.attachment.label }} <br />
-      {{ form.attachment() }}
+      {{ form.attachment(class="form-control") }}
     </p>
     <p>{{ form.submit(class="btn btn-primary") }}</p>
   </form>

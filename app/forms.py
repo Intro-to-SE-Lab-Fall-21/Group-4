@@ -27,4 +27,3 @@ class ForwardReplyForm(FlaskForm):
     reply = SubmitField('Reply')
     compose = FormField(ComposeForm)
 
-

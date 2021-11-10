@@ -88,40 +88,43 @@ def sign_up():
 
 
 # views specific emails
-@view.route('/viewEmail/<uid>', methods=['GET', 'POST'])
+@view.route('/viewEmail/<uid>/<forward>/<reply_flag>', methods=['GET', 'POST'])
 @login_required
-def viewEmail(uid):
-    forward = False
-    reply_flag = False
-    form = ForwardReplyForm()
+def viewEmail(uid, forward, reply_flag):
+    form = ComposeForm()
     email = user_emails.selectEmail(uid)
     num_of_att = len(email.attachments)
+    
+    # Logic to pre-load the compose form based on whether reply or forward == "True"
+    if forward == "True" and form.body.data != '':
+        form.body.data = email.body
+        form.subject.data = 'FW: (' + email.sender + ') ' + email.subject
+    elif reply_flag == "True":
+                form.subject.data = email.subject
+                form.email_to.data = email.sender
+
+    # Logic for importing note into message
+    if request.method=='POST' and (reply_flag=="True" or forward=="True"):
+        if request.form['note'] != "None":
+            noteid = request.form['note']
+            note = Note.query.get(noteid)
+            title = "<html><body><b>" + "Title: " + note.title + "<b></body></html>"
+            form.body.data = form.body.data + title + note.data
+            return render_template('viewEmail.html', form=form, isHTML = email.isHTML, body = email.body, sender = email.sender, receiver = current_user.email, subject = email.subject, uid = email.uid, forward=forward, reply_flag=reply_flag, attachments=email.attachments, attachments_length=num_of_att, user=current_user)
 
     if uid:
-        if form.is_submitted():
-            # allows the user to forward their email
-            if form.forward.data:
-                forward = True
-                reply_flag = False
-                form.compose.body.data = email.body
-                form.compose.subject.data = 'FW: (' + email.sender + ') ' + email.subject
-                return render_template('viewEmail.html', form=form, isHTML = email.isHTML, body = email.body, sender = email.sender, receiver = current_user.email, subject = email.subject, uid = email.uid, forward=forward, reply_flag=reply_flag, attachments=email.attachments, attachments_length=num_of_att)
+        # sends the message ("and form.submit" protects from accidentally sending message when importing notes)
+        if form.validate_on_submit() and form.submit:
+            response = send_composed_message(form)
+            if response is not None:
+                if response == True:
+                    flash('Success! Youre message has been sent!', category='success')
+                    return redirect(url_for('view.viewEmail', uid=uid, forward=False, reply_flag=False))
+                else:
+                    flash('Uh oh! Something went wrong.', category='error')
+                    return render_template('viewEmail.html', form=form, isHTML = email.isHTML, body = email.body, sender = email.sender, receiver = current_user.email, subject = email.subject, uid = email.uid, forward=forward, reply_flag=reply_flag, attachments=email.attachments, attachments_length=num_of_att, user=current_user)
 
-            # allows the user to reply to emails
-            elif form.reply.data:
-                reply_flag = True
-                forward = False
-                form.compose.subject.data = email.subject
-                form.compose.email_to.data = email.sender
-                return render_template('viewEmail.html', form=form, isHTML = email.isHTML, body = email.body, sender = email.sender, receiver = current_user.email, subject = email.subject, uid = email.uid, forward=forward, reply_flag=reply_flag, attachments=email.attachments, attachments_length=num_of_att)
-
-            # sends the message
-            elif form.compose.validate_on_submit():
-                response =  send_composed_message(form.compose)
-                if response is not None:
-                    return response
-
-        return render_template('viewEmail.html', form=form, isHTML = email.isHTML, body = email.body, sender = email.sender, receiver = current_user.email, subject = email.subject, uid = email.uid, forward=forward, reply_flag=reply_flag, attachments=email.attachments, attachments_length=num_of_att)
+        return render_template('viewEmail.html', form=form, isHTML = email.isHTML, body = email.body, sender = email.sender, receiver = current_user.email, subject = email.subject, uid = email.uid, forward=forward, reply_flag=reply_flag, attachments=email.attachments, attachments_length=num_of_att, user=current_user)
 
     return redirect(url_for('view.login'))
 
@@ -134,26 +137,33 @@ def download(index, uid):
     attachment = email.attachments[index]
     download_attachment(attachment)
     flash('Success! Check your downloads folder', category='success')
-    return redirect(url_for('view.viewEmail', uid=uid))
+    return redirect(url_for('view.viewEmail', uid=uid, forward=False, reply_flag=False))
 
 
 # allows user to compose and edit emails
 @view.route('/compose', methods=['GET', 'POST'])
 @login_required
 def compose():
-    # presents form for email and allows user to send
+    # Presents form for email and allows user to send
     form = ComposeForm()
-    if form.validate_on_submit():
-        flag = send_composed_message(form)
-        if flag == True:
-            flash('Success! Your email has been sent.', category='success')
-            return redirect(url_for('view.index'))
+    if request.method=='POST':
+        if request.form['note'] != "None":
+            noteid = request.form['note']
+            note = Note.query.get(noteid)
+            title = "<html><body><b>" + "Title: " + note.title + "<b></body></html>"
+            form.body.data = form.body.data + title + note.data
+            return render_template('compose.html', form=form, user=current_user)
+        if form.validate_on_submit():
+            flag = send_composed_message(form)
+            if flag == True:
+                flash('Success! Your email has been sent.', category='success')
+                return redirect(url_for('view.index'))
 
-        else:
-            flash('An unexpected error occured. Please try again', category='error')
-            print('Whew!', sys.exc_info()[0], 'occurred.')
+            else:
+                flash('An unexpected error occured. Please try again', category='error')
+                print('Whew!', sys.exc_info()[0], 'occurred.')
 
-    return render_template('compose.html', form=form)
+    return render_template('compose.html', form=form, user=current_user)
 
 
 # shows search results
