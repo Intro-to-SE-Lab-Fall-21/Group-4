@@ -4,14 +4,13 @@
   <div>
     <h3>
       Subjects:
-
-      <span style="float: right"
-        ><a
+      <span style="float: right">
+        <a
           class="btn btn-secondary"
           style="font-size: 16px"
           href="{{ url_for('view.index', refresh = True) }}"
-          >Refresh <i class="fa fa-refresh"></i></a
-      ></span>
+          >Refresh <i class="fa fa-refresh"></i></a>
+      </span>
     </h3>
 
     <form method="POST">
@@ -33,7 +32,7 @@
 
   {% for i in range(length1) %}
   <a
-    href="{{ url_for('view.viewEmail', uid = uids[i], forward=False, reply_flag=False) }}"
+    href="{{ url_for('view.viewEmail', uid = uids[i], forward=False, reply_flag=False, deleted=deleted) }}"
     >{{ subjects[i] }}</a
   >
   <hr />

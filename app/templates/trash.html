@@ -1,17 +1,16 @@
 {% extends "base.html" %} {% block content %}
 <div class="container">
-  <h2 align="center">Search Results</h2>
+  <h2 align="center">Trash</h2>
   <div>
     <h3>
       Subjects:
-
-      <span style="float: right"
-        ><a
+      <span style="float: right">
+        <a
           class="btn btn-secondary"
           style="font-size: 16px"
-          href="{{ url_for('view.index', refresh = True) }}"
-          >Refresh <i class="fa fa-refresh"></i></a
-      ></span>
+          href="{{ url_for('view.trash', refresh = True) }}"
+          >Refresh <i class="fa fa-refresh"></i></a>
+      </span>
     </h3>
 
     <form method="POST">
@@ -28,14 +27,11 @@
         <button type="submit" class="btn btn-outline-primary">Search</button>
       </div>
     </form>
+    <br />
   </div>
-  <p>Showing Search Results for "{{ search }}"</p>
-  <br />
+
   {% for i in range(length1) %}
-  <a
-    href="{{ url_for('view.viewEmail', uid = uids[i], forward=False, reply_flag=False, deleted=deleted) }}"
-    >{{ subjects[i] }}</a
-  >
+  <a href="{{ url_for('view.viewEmail', uid = uids[i], deleted=deleted) }}">{{ subjects[i] }}</a>
   <hr />
   {% endfor %}
 </div>

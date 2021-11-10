@@ -52,6 +52,7 @@
           >
           <a class="nav-item nav-link" href="/compose">Compose </a>
           <a class="nav-item nav-link" href="/notes">Notes</a>
+          <a class="nav-item nav-link" href="{{ url_for('view.trash', refresh = False) }}">Trash</a>
           <a class="nav-item nav-link" href="/logout">Logout</a>
           {% endif %}
         </div>
