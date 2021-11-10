@@ -139,7 +139,7 @@ def viewEmail(uid, forward, reply_flag, deleted="False"):
             note = Note.query.get(noteid)
             title = "<html><body><b>" + "Title: " + note.title + "<b></body></html>"
             form.body.data = form.body.data + title + note.data
-            return render_template('viewEmail.html', form=form, isHTML = email.isHTML, body = email.body, sender = email.sender, receiver = current_user.email, subject = email.subject, uid = email.uid, forward=forward, reply_flag=reply_flag, attachments=email.attachments, attachments_length=num_of_att, user=current_user)
+            return render_template('viewEmail.html', deleted=deleted, trashForm = trashForm, form=form, isHTML = email.isHTML, body = email.body, sender = email.sender, receiver = current_user.email, subject = email.subject, uid = email.uid, forward=forward, reply_flag=reply_flag, attachments=email.attachments, attachments_length=num_of_att, user=current_user)
 
     if uid:
         # sends the message ("and form.submit" protects from accidentally sending message when importing notes)
@@ -148,10 +148,10 @@ def viewEmail(uid, forward, reply_flag, deleted="False"):
             if response is not None:
                 if response == True:
                     flash('Success! Youre message has been sent!', category='success')
-                    return redirect(url_for('view.viewEmail', uid=uid, forward=False, reply_flag=False))
+                    return redirect(url_for('view.viewEmail', uid=uid, forward=False, reply_flag=False, deleted = deleted))
                 else:
                     flash('Uh oh! Something went wrong.', category='error')
-                    return render_template('viewEmail.html', form=form, isHTML = email.isHTML, body = email.body, sender = email.sender, receiver = current_user.email, subject = email.subject, uid = email.uid, forward=forward, reply_flag=reply_flag, attachments=email.attachments, attachments_length=num_of_att, user=current_user)
+                    return render_template('viewEmail.html', deleted = deleted, trashForm = trashForm, form=form, isHTML = email.isHTML, body = email.body, sender = email.sender, receiver = current_user.email, subject = email.subject, uid = email.uid, forward=forward, reply_flag=reply_flag, attachments=email.attachments, attachments_length=num_of_att, user=current_user)
 
         
         if trashForm.is_submitted():
@@ -238,7 +238,7 @@ def searchResults(search, deleted="False"):
     if request.method == 'POST':
         searchQuery = request.form.get('search')
         if searchQuery:
-            return redirect(url_for('view.searchResults', search=searchQuery))
+            return redirect(url_for('view.searchResults', search=searchQuery, deleted = deleted))
         else:
             return redirect(url_for('view.index'))
     

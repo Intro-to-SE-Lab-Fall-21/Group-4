@@ -21,9 +21,9 @@
 </div>
 <br />
 {% if forward=="False" %}
-  <a  href="{{ url_for('view.viewEmail', uid=uid, forward=True, reply_flag=False)}}" class="btn btn-primary">Forward</a>
+  <a  href="{{ url_for('view.viewEmail', uid=uid, forward=True, reply_flag=False, deleted = deleted)}}" class="btn btn-primary">Forward</a>
 {% endif %} {% if reply_flag=="False" %}
-<a  href="{{ url_for('view.viewEmail', uid=uid, forward=False, reply_flag=True)}}" class="btn btn-primary">Reply</a>
+<a  href="{{ url_for('view.viewEmail', uid=uid, forward=False, reply_flag=True, deleted = deleted)}}" class="btn btn-primary">Reply</a>
 {% endif %} 
 {% if reply_flag==False %}
   <form action="" method="post"><p>{{ form.reply(class="btn btn-primary") }}</p></form>
@@ -31,16 +31,16 @@
 
 {% if deleted=='False' %}
 <form action="" method="post" novalidate>
-  {{ form.hidden_tag() }}
-  <p>{{ form.trash(class="btn btn-primary") }}</p>
+  {{ trashForm.hidden_tag() }}
+  <p>{{ trashForm.trash(class="btn btn-primary") }}</p>
 </form>
 {% endif %}
 
 {% if deleted=='True' %}
 <form action="" method="post" novalidate>
-  {{ form.hidden_tag() }}
-  <p>{{ form.untrash(class="btn btn-primary") }}</p>
-  <p>{{ form.delete(class="btn btn-primary") }}</p>
+  {{ trashForm.hidden_tag() }}
+  <p>{{ trashForm.untrash(class="btn btn-primary") }}</p>
+  <p>{{ trashForm.delete(class="btn btn-primary") }}</p>
 </form>
 {% endif %}
 

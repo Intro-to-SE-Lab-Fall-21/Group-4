@@ -31,8 +31,11 @@
   </div>
 
   {% for i in range(length1) %}
-  <a href="{{ url_for('view.viewEmail', uid = uids[i], deleted=deleted) }}">{{ subjects[i] }}</a>
-  <hr />
+  <a
+    href="{{ url_for('view.viewEmail', uid = uids[i], forward=False, reply_flag=False, deleted=deleted) }}"
+    >{{ subjects[i] }}</a
+  >
+  <hr>
   {% endfor %}
 </div>
 {% endblock %}
