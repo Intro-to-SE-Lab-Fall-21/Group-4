@@ -133,7 +133,7 @@ def viewEmail(uid, forward, reply_flag, deleted="False"):
                 form.email_to.data = email.sender
 
     # Logic for importing note into message
-    if request.method=='POST' and (reply_flag=="True" or forward=="True"):
+    if request.method=='POST' and (reply_flag=="True" or forward=="True") and not trashForm.is_submitted():
         if request.form['note'] != "None":
             noteid = request.form['note']
             note = Note.query.get(noteid)
@@ -166,7 +166,7 @@ def viewEmail(uid, forward, reply_flag, deleted="False"):
                 return redirect(url_for('view.trash', refresh=True))
 
 
-        return render_template('viewEmail.html', deleted=deleted, trashForm=trashForm, form=form, isHTML = email.isHTML, body = email.body, sender = email.sender, receiver = current_user.email, subject = email.subject, uid = email.uid, forward=forward, reply_flag=reply_flag, attachments=email.attachments, attachments_length=num_of_att)
+        return render_template('viewEmail.html', deleted=deleted, trashForm=trashForm, form=form, isHTML = email.isHTML, body = email.body, sender = email.sender, receiver = current_user.email, subject = email.subject, uid = email.uid, forward=forward, reply_flag=reply_flag, attachments=email.attachments, attachments_length=num_of_att, user=current_user)
 
     return redirect(url_for('view.login'))
 
