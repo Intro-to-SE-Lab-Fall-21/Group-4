@@ -125,21 +125,23 @@ def viewEmail(uid, forward, reply_flag, deleted="False"):
     num_of_att = len(email.attachments)
     
     # Logic to pre-load the compose form based on whether reply or forward == "True"
-    if forward == "True" and form.body.data != '':
+    if forward == "True" and (form.body.data == None):
         form.body.data = email.body
         form.subject.data = 'FW: (' + email.sender + ') ' + email.subject
     elif reply_flag == "True":
-                form.subject.data = email.subject
-                form.email_to.data = email.sender
+            form.subject.data = email.subject
+            form.email_to.data = email.sender
 
     # Logic for importing note into message
-    if request.method=='POST' and (reply_flag=="True" or forward=="True") and not trashForm.is_submitted():
-        if request.form['note'] != "None":
-            noteid = request.form['note']
-            note = Note.query.get(noteid)
-            title = "<html><body><b>" + "Title: " + note.title + "<b></body></html>"
-            form.body.data = form.body.data + title + note.data
-            return render_template('viewEmail.html', deleted=deleted, trashForm = trashForm, form=form, isHTML = email.isHTML, body = email.body, sender = email.sender, receiver = current_user.email, subject = email.subject, uid = email.uid, forward=forward, reply_flag=reply_flag, attachments=email.attachments, attachments_length=num_of_att, user=current_user)
+    if request.method=='POST' and (reply_flag=="True" or forward=="True"):
+        if not trashForm.trash.data and not trashForm.untrash.data:
+            if request.form['note'] != "None":
+                noteid = request.form['note']
+                note = Note.query.get(noteid)
+                title = "<html><body><b>" + "Title: " + note.title + "<b></body></html>"
+                print("is working")
+                form.body.data = form.body.data + title + note.data
+                return render_template('viewEmail.html', deleted=deleted, trashForm = trashForm, form=form, isHTML = email.isHTML, body = email.body, sender = email.sender, receiver = current_user.email, subject = email.subject, uid = email.uid, forward=forward, reply_flag=reply_flag, attachments=email.attachments, attachments_length=num_of_att, user=current_user)
 
     if uid:
         # sends the message ("and form.submit" protects from accidentally sending message when importing notes)
