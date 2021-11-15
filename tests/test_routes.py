@@ -43,7 +43,13 @@ def real_test_user():
 @pytest.fixture(scope='session')
 def inbox(real_test_user):
     inbox = Emails()
-    inbox.getEmails(real_test_user)
+    inbox.getEmails(real_test_user, "INBOX")
+    yield inbox
+
+@pytest.fixture(scope='session')
+def trash(real_test_user):
+    inbox = Emails()
+    inbox.getEmails(real_test_user, "[Gmail]/Trash")
     yield inbox
 
 # To be used with the getEmails function
@@ -67,7 +73,7 @@ def test_html_logged_out(client):
     assert res.status_code == 302
     res = client.get('/compose')
     assert res.status_code == 302
-    res = client.get('/viewEmail/<1>/False/False')
+    res = client.get('/viewEmail/<1>/False/False/False')
     assert res.status_code == 302
     res = client.get('/logout')
     assert res.status_code == 302
@@ -89,11 +95,14 @@ def test_login_user(client):
 ========================================INBOX TESTS========================================
 '''
 # This tests the function SelectEmails() function within the Emails class works.
-def test_select_emails(inbox):
-    selected_email = inbox.selectEmail(9)
-    assert 'I was wondering' in selected_email.body
-    selected_email = inbox.selectEmail(5000)
-    assert selected_email == 'Failed'
+@pytest.mark.parametrize('value', (9, 50000))
+def test_select_emails(inbox, value):
+    if value == 9:
+        selected_email = inbox.selectEmail(value)
+        assert 'I was wondering' in selected_email.body
+    elif value == 50000:
+        selected_email = inbox.selectEmail(value)
+        assert selected_email == 'Failed'
 
 # This tests that the clearAll () function within the Emails class works.
 # This is particularly important for the apps security.
