@@ -29,20 +29,59 @@
       >
         <span class="navbar-toggler-icon"></span>
       </button>
-      <div class="pos-f-t">
-        <div class="collapse" id="navbarToggleExternalContent">
-          <div class="bg-dark p-4">
-            <h4 class="text-white">Collapsed content</h4>
-            <span class="text-muted">Toggleable via the navbar brand.</span>
-          </div>
+    <div class="pos-f-t"></div>
+      <div class="collapse" id="navbarSupportedContent">
+        <ul class="navbar-nav mr-auto">
+          <li class="nav-item active"></li>
+          {% if current_user.is_anonymous %}
+          <a class="nav-item nav-link" href="/login">Login</a>
+          <a class="nav-item nav-link" href="/sign-up">Sign Up</a>
+          {% else %}
+          <a
+            class="nav-item nav-link"
+            href="{{ url_for('view.index', refresh = False) }}"
+            >Home</a>
+          <a class="nav-item nav-link" href="/compose">Compose </a>
+          <a class="nav-item nav-link" href="/logout">Logout</a>
+          {% endif %}
         </div>
-        <nav class="navbar navbar-dark bg-dark">
-          <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarToggleExternalContent" aria-controls="navbarToggleExternalContent" aria-expanded="false" aria-label="Toggle navigation">
-            <span class="navbar-toggler-icon"></span>
-          </button>
-        </nav>
       </div>
-            
+      <nav class="navbar navbar-dark bg-dark">
+        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarToggleExternalContent" aria-controls="navbarToggleExternalContent" aria-expanded="false" aria-label="Toggle navigation">
+          <span class="navbar-toggler-icon"></span>
+        </button>
+    </nav>
+  </div>
+    {% with messages = get_flashed_messages(with_categories=true) %} {% if
+    messages %} {% for category, message in messages %} {% if category ==
+    'success' %}
+    <div class="alert alert-success alter-dismissable fade show" role="alert">
+      {{ message }}
+      <span style="float: right">
+        <button
+          type="button"
+          class="btn-close"
+          data-bs-dismiss="alert"
+          aria-label="Close"
+        ></button>
+      </span>
+    </div>
+    {% else %}
+    <div class="alert alert-danger alter-dismissable fade show" role="alert">
+      {{ message }}
+      <span style="float: right">
+        <button
+          type="button"
+          class="btn-close"
+          data-bs-dismiss="alert"
+          aria-label="Close"
+        ></button>
+      </span>
+    </div>
+    {% endif %} {% endfor %} {% endif %} {% endwith %} {% block content %}{%
+    endblock %}
+
+
 
 
 
