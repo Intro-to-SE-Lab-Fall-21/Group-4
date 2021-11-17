@@ -242,7 +242,10 @@ def searchResults(search, deleted="False"):
         if searchQuery:
             return redirect(url_for('view.searchResults', search=searchQuery, deleted = deleted))
         else:
-            return redirect(url_for('view.index'))
+            if deleted == 'True':
+                return redirect(url_for('view.trash', refresh="False"))
+            else:
+                return redirect(url_for('view.index'))
     
     return render_template('searchResults.html', deleted=deleted, search=search, user = current_user.first_name, subjects = searchResultsSubjs, uids = searchResultsUids, length1 = len(searchResultsUids))
 
