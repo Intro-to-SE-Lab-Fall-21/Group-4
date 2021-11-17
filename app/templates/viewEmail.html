@@ -7,24 +7,41 @@
     Body: <br />
   </p>
   {% if isHTML %}
-  <p>{{ body |safe }}</p>
+    <p>{{ body |safe }}</p>
   {% else %}
-  <pre
-    style="white-space: pre-wrap"
-  ><span style="font-family: Arial, Helvetica, sans-serif; font-size: 16px" >{{ body }}</span></pre>
+    <pre
+      style="white-space: pre-wrap"
+    ><span style="font-family: Arial, Helvetica, sans-serif; font-size: 16px" >{{ body }}</span></pre>
 </div>
 {% endif %} <br />
   <div class="container">
   {% for i in range(attachments_length) %}
-  <a href="{{ url_for('view.download', index=i, uid=uid) }}" class="link-dark m-2">{{ attachments[i].filename.replace(' ', '_')}}</a>
+  <a href="{{ url_for('view.download', index=i, uid=uid, deleted=deleted) }}" class="link-dark m-2">{{ attachments[i].filename.replace(' ', '_')}}</a>
   {% endfor %}
 </div>
 <br />
+<div>
 {% if forward=="False" %}
-  <a  href="{{ url_for('view.viewEmail', uid=uid, forward=True, reply_flag=False)}}" class="btn btn-primary">Forward</a>
+  <a  href="{{ url_for('view.viewEmail', uid=uid, forward=True, reply_flag=False, deleted = deleted)}}" class="btn btn-primary">Forward</a>
 {% endif %} {% if reply_flag=="False" %}
-<a  href="{{ url_for('view.viewEmail', uid=uid, forward=False, reply_flag=True)}}" class="btn btn-primary">Reply</a>
+<a  href="{{ url_for('view.viewEmail', uid=uid, forward=False, reply_flag=True, deleted = deleted)}}" class="btn btn-primary">Reply</a>
 {% endif %} 
+</div>
+<br /> 
+{% if deleted=='False' %}
+<form action="" method="post" novalidate>
+  {{ trashForm.hidden_tag() }}
+  <p>{{ trashForm.trash(class="btn btn-primary") }}</p>
+</form>
+{% endif %}
+
+{% if deleted=='True' %}
+<form action="" method="post" novalidate>
+  {{ trashForm.hidden_tag() }}
+  <p>{{ trashForm.untrash(class="btn btn-success") }}</p>
+  <p>{{ trashForm.delete(class="btn btn-danger") }}</p>
+</form>
+{% endif %}
 
 {% if forward=="True" or reply_flag=="True" %}
 {% if forward=="True"%}
@@ -77,7 +94,7 @@
       </p>
       <p>
         {{ form.attachment.label }} <br />
-        {{ form.attachment() }}
+        {{ form.attachment(class="form form-control") }}
       </p>
       <p>{{ form.submit(class="btn btn-primary") }}</p>
     </form>
