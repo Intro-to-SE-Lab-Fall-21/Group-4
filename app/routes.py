@@ -1,6 +1,6 @@
 from os import error
 from flask import render_template, request, flash, redirect, url_for, Blueprint, current_app
-from app.forms import ForwardReplyForm, LoginForm, SignupForm, ComposeForm
+from app.forms import ForwardReplyTrashForm, LoginForm, SignupForm, ComposeForm
 from smtplib import SMTP_SSL, SMTPAuthenticationError
 from app import  db
 from .models import Note, User, Emails, download_attachment, send_composed_message, authorize, userEmail
@@ -13,6 +13,7 @@ from bs4 import BeautifulSoup
 
 view = Blueprint('view', __name__)
 user_emails = Emails()
+user_deleted_emails = Emails()
 
 # loads in the user's emails and displays links to read them
 @view.route('/', methods=['GET', 'POST'])
@@ -25,17 +26,40 @@ def index(refresh="False"):
     if request.method == 'POST':
         searchQuery = request.form.get('search')
         if searchQuery:
-            return redirect(url_for('view.searchResults', search=searchQuery))
+            return redirect(url_for('view.searchResults', search=searchQuery, deleted=False))
 
         else:
             return redirect(url_for('view.index'))
 
     # adds refresh functionality to reload all the emails
     if not user_emails.emails or refresh == "True":
-        user_emails.clearAll
-        user_emails.getEmails(current_user)
+        user_emails.clearAll()
+        user_deleted_emails.clearAll()
+        user_emails.getEmails(current_user, 'INBOX')
+        user_deleted_emails.getEmails(current_user, '[Gmail]/Trash')
+    return render_template('index.html', search = 0, deleted = False, user=current_user.first_name, subjects = user_emails.subjects, uids = user_emails.uids, length1 = len(user_emails.subjects))
+    
 
-    return render_template('index.html', search = 0, user=current_user.first_name, subjects = user_emails.subjects, uids = user_emails.uids, length1 = len(user_emails.subjects))
+@view.route('/trash/<refresh>', methods=['GET', 'POST'])
+@login_required
+def trash(refresh="False"):
+    searchQuery = ""
+
+    # checks to see if the user searches through the emails
+    if request.method == 'POST':
+        searchQuery = request.form.get('search')
+        if searchQuery:
+            return redirect(url_for('view.searchResults', search=searchQuery, deleted=True))
+
+        else:
+            return redirect(url_for('view.trash', refresh='False'))
+
+    if not user_emails.emails or refresh == "True":
+        user_emails.clearAll()
+        user_deleted_emails.clearAll()
+        user_emails.getEmails(current_user, 'INBOX')
+        user_deleted_emails.getEmails(current_user, '[Gmail]/Trash')
+    return render_template('trash.html', search = 0, deleted = True, subjects = user_deleted_emails.subjects, uids = user_deleted_emails.uids, length1 = len(user_deleted_emails.subjects))
 
 
 # handles login for the user
@@ -88,29 +112,36 @@ def sign_up():
 
 
 # views specific emails
-@view.route('/viewEmail/<uid>/<forward>/<reply_flag>', methods=['GET', 'POST'])
+@view.route('/viewEmail/<uid>/<forward>/<reply_flag>/<deleted>', methods=['GET', 'POST'])
 @login_required
-def viewEmail(uid, forward, reply_flag):
+def viewEmail(uid, forward, reply_flag, deleted="False"):
     form = ComposeForm()
-    email = user_emails.selectEmail(uid)
+    trashForm = ForwardReplyTrashForm()
+    if deleted == 'False':
+        email = user_emails.selectEmail(uid)
+    else:
+        email = user_deleted_emails.selectEmail(uid)
+
     num_of_att = len(email.attachments)
     
     # Logic to pre-load the compose form based on whether reply or forward == "True"
-    if forward == "True" and form.body.data != '':
+    if forward == "True" and (form.body.data == None):
         form.body.data = email.body
         form.subject.data = 'FW: (' + email.sender + ') ' + email.subject
     elif reply_flag == "True":
-                form.subject.data = email.subject
-                form.email_to.data = email.sender
+            form.subject.data = email.subject
+            form.email_to.data = email.sender
 
     # Logic for importing note into message
     if request.method=='POST' and (reply_flag=="True" or forward=="True"):
-        if request.form['note'] != "None":
-            noteid = request.form['note']
-            note = Note.query.get(noteid)
-            title = "<html><body><b>" + "Title: " + note.title + "<b></body></html>"
-            form.body.data = form.body.data + title + note.data
-            return render_template('viewEmail.html', form=form, isHTML = email.isHTML, body = email.body, sender = email.sender, receiver = current_user.email, subject = email.subject, uid = email.uid, forward=forward, reply_flag=reply_flag, attachments=email.attachments, attachments_length=num_of_att, user=current_user)
+        if not trashForm.trash.data and not trashForm.untrash.data:
+            if request.form['note'] != "None":
+                noteid = request.form['note']
+                note = Note.query.get(noteid)
+                title = "<html><body><b>" + "Title: " + note.title + "<b></body></html>"
+                print("is working")
+                form.body.data = form.body.data + title + note.data
+                return render_template('viewEmail.html', deleted=deleted, trashForm = trashForm, form=form, isHTML = email.isHTML, body = email.body, sender = email.sender, receiver = current_user.email, subject = email.subject, uid = email.uid, forward=forward, reply_flag=reply_flag, attachments=email.attachments, attachments_length=num_of_att, user=current_user)
 
     if uid:
         # sends the message ("and form.submit" protects from accidentally sending message when importing notes)
@@ -119,25 +150,41 @@ def viewEmail(uid, forward, reply_flag):
             if response is not None:
                 if response == True:
                     flash('Success! Youre message has been sent!', category='success')
-                    return redirect(url_for('view.viewEmail', uid=uid, forward=False, reply_flag=False))
+                    return redirect(url_for('view.viewEmail', uid=uid, forward=False, reply_flag=False, deleted = deleted))
                 else:
                     flash('Uh oh! Something went wrong.', category='error')
-                    return render_template('viewEmail.html', form=form, isHTML = email.isHTML, body = email.body, sender = email.sender, receiver = current_user.email, subject = email.subject, uid = email.uid, forward=forward, reply_flag=reply_flag, attachments=email.attachments, attachments_length=num_of_att, user=current_user)
+                    return render_template('viewEmail.html', deleted = deleted, trashForm = trashForm, form=form, isHTML = email.isHTML, body = email.body, sender = email.sender, receiver = current_user.email, subject = email.subject, uid = email.uid, forward=forward, reply_flag=reply_flag, attachments=email.attachments, attachments_length=num_of_att, user=current_user)
 
-        return render_template('viewEmail.html', form=form, isHTML = email.isHTML, body = email.body, sender = email.sender, receiver = current_user.email, subject = email.subject, uid = email.uid, forward=forward, reply_flag=reply_flag, attachments=email.attachments, attachments_length=num_of_att, user=current_user)
+        
+        if trashForm.is_submitted():
+            if trashForm.trash.data:
+                user_emails.moveToTrash(current_user, uid)
+                return redirect(url_for('view.index', refresh=True))
+            if trashForm.untrash.data:
+                user_deleted_emails.removeFromTrash(current_user, uid)
+                return redirect(url_for('view.trash', refresh=True))
+            if trashForm.delete.data:
+                user_deleted_emails.deleteEmail(current_user, uid)
+                return redirect(url_for('view.trash', refresh=True))
+
+
+        return render_template('viewEmail.html', deleted=deleted, trashForm=trashForm, form=form, isHTML = email.isHTML, body = email.body, sender = email.sender, receiver = current_user.email, subject = email.subject, uid = email.uid, forward=forward, reply_flag=reply_flag, attachments=email.attachments, attachments_length=num_of_att, user=current_user)
 
     return redirect(url_for('view.login'))
 
 
 # Route to download aa particulat attachment of a particular email (specified by the attachments index in the email)
-@view.route('download/<index>/<uid>')
-def download(index, uid):
-    email = user_emails.selectEmail(uid)
+@view.route('download/<index>/<uid>/<deleted>')
+def download(index, uid, deleted="False"):
+    if deleted == "False":
+        email = user_emails.selectEmail(uid)
+    else:
+        email = user_deleted_emails.selectEmail(uid)
     index = int(index)
     attachment = email.attachments[index]
     download_attachment(attachment)
     flash('Success! Check your downloads folder', category='success')
-    return redirect(url_for('view.viewEmail', uid=uid, forward=False, reply_flag=False))
+    return redirect(url_for('view.viewEmail', uid=uid, forward=False, reply_flag=False, deleted=deleted))
 
 
 # allows user to compose and edit emails
@@ -167,29 +214,40 @@ def compose():
 
 
 # shows search results
-@view.route('/searchResults/<search>', methods=['GET', 'POST'])
+@view.route('/searchResults/<search>/<deleted>', methods=['GET', 'POST'])
 @login_required
-def searchResults(search):
+def searchResults(search, deleted="False"):
     searchQuery = ""
     searchResultsSubjs = []
     searchResultsUids = []
     # loops through emails and finds ones with matching subjects
-    for email in user_emails.emails:
-        subj = email.subject.lower()
-        search = search.lower()
-        if search in subj:
-            searchResultsSubjs.append(email.subject)
-            searchResultsUids.append(email.uid)
+    if deleted == 'False':
+        for email in user_emails.emails:
+            subj = email.subject.lower()
+            search = search.lower()
+            if search in subj:
+                searchResultsSubjs.append(email.subject)
+                searchResultsUids.append(email.uid)
+    else:
+        for email in user_deleted_emails.emails:
+            subj = email.subject.lower()
+            search = search.lower()
+            if search in subj:
+                searchResultsSubjs.append(email.subject)
+                searchResultsUids.append(email.uid)
 
     # allows the user to search from this page too
     if request.method == 'POST':
         searchQuery = request.form.get('search')
         if searchQuery:
-            return redirect(url_for('view.searchResults', search=searchQuery))
+            return redirect(url_for('view.searchResults', search=searchQuery, deleted = deleted))
         else:
-            return redirect(url_for('view.index'))
+            if deleted == 'True':
+                return redirect(url_for('view.trash', refresh="False"))
+            else:
+                return redirect(url_for('view.index'))
     
-    return render_template('searchResults.html', search=search, user = current_user.first_name, subjects = searchResultsSubjs, uids = searchResultsUids, length1 = len(searchResultsUids))
+    return render_template('searchResults.html', deleted=deleted, search=search, user = current_user.first_name, subjects = searchResultsSubjs, uids = searchResultsUids, length1 = len(searchResultsUids))
 
 
 # Note route: Displays the user's notes, allows the user to add/edit/delete notes.
@@ -273,12 +331,12 @@ def recoverNote(id):
             db.session.commit()
     return redirect(url_for('view.deletedNotes', user=current_user))
 
-
 # logs the user out
 @view.route('/logout')
 @login_required
 def logout():
     user_emails.clearAll()
+    user_deleted_emails.clearAll()
     logout_user()
     return redirect(url_for('view.login'))
 

@@ -8,6 +8,7 @@ from mimetypes import guess_type
 from smtplib import SMTPAuthenticationError, SMTP_SSL
 from sqlalchemy.sql import func
 import os
+import imaplib
 
 # User SQLAlchemy class for database management
 class User(db.Model, UserMixin):
@@ -56,10 +57,11 @@ class Emails():
 
     # Function to login to imap server and fetch all emails. Loads the lists
     # uids, emails, and subjects with all the emails.
-    def getEmails(self, user):
+    def getEmails(self, user, folder):
         email = user.email
         pwd = user.password
-        with MailBox('imap.gmail.com').login(email, pwd, 'INBOX') as mailbox:
+        with MailBox('imap.gmail.com').login(email, pwd, initial_folder=folder) as mailbox:
+            #mailbox.delete([msg.uid for msg in mailbox.fetch() if 'willthisdelete' in msg.html])
             attachments = []
             bodies = []
             bodiesHTML = []
@@ -76,7 +78,7 @@ class Emails():
                 subjects.append(msg.subject)
                 senders.append(msg.from_)
                 uids.append(msg.uid)
-
+            
             for i in range(len(subjects)):
                 email = userEmail(uids[i], subjects[i], bodiesHTML[i], senders[i], False, attachments[i]) 
                 soup = BeautifulSoup(email.body, 'html.parser')
@@ -90,6 +92,23 @@ class Emails():
                 self.uids.append(email.uid)
                 self.subjects.append(email.subject)
 
+    def moveToTrash(self, user, uid):
+        email = user.email
+        pwd = user.password
+        with MailBox('imap.gmail.com').login(email, pwd) as mailbox:
+            mailbox.move(uid, '[Gmail]/Trash')
+
+    def removeFromTrash(self, user, uid):
+        email = user.email
+        pwd = user.password
+        with MailBox('imap.gmail.com').login(email, pwd, initial_folder='[Gmail]/Trash') as mailbox:
+            mailbox.move(uid, 'INBOX')
+    
+    def deleteEmail(self, user, uid):
+        email = user.email
+        pwd = user.password
+        with MailBox('imap.gmail.com').login(email, pwd, initial_folder='[Gmail]/Trash') as mailbox:
+            mailbox.delete(uid)
     
     # Selects a particular email (based on uid) in the emails list.
     def selectEmail(self, uid):
