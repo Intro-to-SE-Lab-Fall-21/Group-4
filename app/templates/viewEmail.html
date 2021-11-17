@@ -38,8 +38,8 @@
 {% if deleted=='True' %}
 <form action="" method="post" novalidate>
   {{ trashForm.hidden_tag() }}
-  <p>{{ trashForm.untrash(class="btn btn-primary") }}</p>
-  <p>{{ trashForm.delete(class="btn btn-primary") }}</p>
+  <p>{{ trashForm.untrash(class="btn btn-success") }}</p>
+  <p>{{ trashForm.delete(class="btn btn-danger") }}</p>
 </form>
 {% endif %}
 
