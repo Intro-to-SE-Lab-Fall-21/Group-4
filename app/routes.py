@@ -34,11 +34,12 @@ def index(refresh="False"):
     # adds refresh functionality to reload all the emails
     if not user_emails.emails or refresh == "True":
         user_emails.clearAll()
+
         user_deleted_emails.clearAll()
         user_emails.getEmails(current_user, 'INBOX')
         user_deleted_emails.getEmails(current_user, '[Gmail]/Trash')
     return render_template('index.html', search = 0, deleted = False, user=current_user.first_name, subjects = user_emails.subjects, uids = user_emails.uids, length1 = len(user_emails.subjects))
-    
+
 
 @view.route('/trash/<refresh>', methods=['GET', 'POST'])
 @login_required
@@ -81,6 +82,9 @@ def login():
 def sign_up():
 
     # signs up users and makes sure form is valid
+    if current_user.is_authenticated:
+        return redirect(url_for('view.index'))
+
     form = SignupForm()
     if form.validate_on_submit():
         email = form.email.data
@@ -104,7 +108,7 @@ def sign_up():
                 new_user = User(email=email, password=password1, first_name=first_name, last_name=last_name)
                 db.session.add(new_user)
                 db.session.commit()
-                flash('Success! You logged into your email!', category='success')
+                flash('Success! You created an account!', category='success')
             # fails if user's info does not match up with their email's info
             except SMTPAuthenticationError:
                 flash('Error, these credentials are not valid.', category ='error')
