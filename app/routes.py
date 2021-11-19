@@ -108,7 +108,7 @@ def sign_up():
                 new_user = User(email=email, password=password1, first_name=first_name, last_name=last_name)
                 db.session.add(new_user)
                 db.session.commit()
-                flash('Success! You logged into your email!', category='success')
+                flash('Success! You created an account!', category='success')
             # fails if user's info does not match up with their email's info
             except SMTPAuthenticationError:
                 flash('Error, these credentials are not valid.', category ='error')
