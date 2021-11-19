@@ -42,6 +42,17 @@ def client():
         yield client
 
 
+@pytest.fixture(scope='module')
+def auth_client():
+    app = create_app()
+    app.config['TESTING'] = True
+    app.config['WTF_CSRF_ENABLED'] = False
+    with app.test_client() as client:
+        login(client, "tcctesteremail@gmail.com", "123BigTest654")
+        yield client
+
+
+
 # To be used with the getEmails and sendEmail functions
 @pytest.fixture(scope='session')
 def real_test_user():
@@ -99,19 +110,19 @@ def test_login(client):
     assert b'Hello' in rv.data
 
 
-def test_html_logged_in(client):
-    login(client, 'tcctesteremail@gmail.com', '123BigTest654')
-    res = client.get('/sign-up')
+def test_html_logged_in(auth_client):
+    #login(client, 'tcctesteremail@gmail.com', '123BigTest654')
+    res = auth_client.get('/sign-up')
     assert res.status_code == 302
-    res = client.get('/login')
+    res = auth_client.get('/login')
     assert res.status_code == 302
-    res = client.get('/index/<refresh>')
+    res = auth_client.get('/index/<refresh>')
     assert res.status_code == 200
-    res = client.get('/compose')
+    res = auth_client.get('/compose')
     assert res.status_code == 200
-    res = client.get('/viewEmail/1/False/False/False')
+    res = auth_client.get('/viewEmail/1/False/False/False')
     assert res.status_code == 200
-    res = client.get('/logout')
+    res = auth_client.get('/logout')
     assert res.status_code == 302
 
 
