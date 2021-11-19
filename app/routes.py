@@ -82,6 +82,9 @@ def login():
 def sign_up():
 
     # signs up users and makes sure form is valid
+    if current_user.is_authenticated:
+        return redirect(url_for('view.index'))
+
     form = SignupForm()
     if form.validate_on_submit():
         email = form.email.data
