@@ -29,6 +29,10 @@ def login(client, username, password):
 def logout(client):
     return client.get('/logout', follow_redirects=True)
 
+def refresh(auth_client):
+    return auth_client.get('/index/True', follow_redirects=True)
+
+
 '''
 ========================================FIXTURES========================================
 '''
@@ -49,7 +53,7 @@ def auth_client():
     app.config['TESTING'] = True
     app.config['WTF_CSRF_ENABLED'] = False
     with app.test_client() as client:
-        login(client, "tcctesteremail@gmail.com", "123BigTest654")
+        login(client, "tcctesteremail2@gmail.com", "123BigTest654")
         yield client
 
 
@@ -126,11 +130,50 @@ def test_html_logged_in(auth_client):
     res = auth_client.get('/logout')
     assert res.status_code == 302
 
+'''
+========================================NOTES TESTS========================================
+'''
+def test_notes(auth_client):
+    res = auth_client.get('/notes')
+    assert b"Grocery List" in res.data
+
 
 '''
 ========================================INBOX TESTS========================================
 '''
 # This tests the function SelectEmails() function within the Emails class works.
+
+def test_move_to_trash(real_test_user):
+    inbox = Emails()
+    inbox.getEmails(real_test_user, "INBOX")
+    uids = inbox.uids
+    uidMax = max(uids)
+
+    inbox.moveToTrash(real_test_user, uidMax)
+
+    inbox.clearAll()
+    inbox.getEmails(real_test_user, "INBOX")
+    newMax = max(inbox.uids)  
+    assert newMax != uidMax
+
+
+def test_remove_to_trash(real_test_user):
+    inbox = Emails()
+    inbox.getEmails(real_test_user, "[Gmail]/Trash")
+    uids = inbox.uids
+    uidMax = max(uids)
+
+    inbox.removeFromTrash(real_test_user, uidMax)
+    
+    inbox.clearAll()
+    inbox.getEmails(real_test_user, "[Gmail]/Trash")
+    newMax = max(inbox.uids) 
+    assert newMax != uidMax
+
+
+
+
+
 @pytest.mark.parametrize('value', (10, 50000))
 def test_select_emails(inbox, value):
     if value == 9:
@@ -140,6 +183,7 @@ def test_select_emails(inbox, value):
         selected_email = inbox.selectEmail(value)
         assert selected_email == 'Failed'
 
+    
 # This tests that the clearAll () function within the Emails class works.
 # This is particularly important for the apps security.
 def test_clear_all(inbox):
@@ -147,7 +191,6 @@ def test_clear_all(inbox):
     assert len(inbox.subjects) == 0
     assert len(inbox.emails) == 0
     assert len(inbox.uids) == 0
-
 
 
 
