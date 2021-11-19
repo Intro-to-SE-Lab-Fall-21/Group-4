@@ -1,4 +1,5 @@
 import os
+import re
 import tempfile
 from flask_sqlalchemy import SQLAlchemy
 import pytest
@@ -60,7 +61,7 @@ def real_test_user():
     return user
 
 # To be used for all inbox tests.
-@pytest.fixture(scope='session')
+@pytest.fixture(scope='function')
 def inbox(real_test_user):
     inbox = Emails()
     inbox.getEmails(real_test_user, "INBOX")
@@ -130,11 +131,11 @@ def test_html_logged_in(auth_client):
 ========================================INBOX TESTS========================================
 '''
 # This tests the function SelectEmails() function within the Emails class works.
-@pytest.mark.parametrize('value', (9, 50000))
+@pytest.mark.parametrize('value', (10, 50000))
 def test_select_emails(inbox, value):
     if value == 9:
         selected_email = inbox.selectEmail(value)
-        assert 'I was wondering' in selected_email.body
+        assert 'Dear Mr. Test' in selected_email.body
     elif value == 50000:
         selected_email = inbox.selectEmail(value)
         assert selected_email == 'Failed'
@@ -146,3 +147,41 @@ def test_clear_all(inbox):
     assert len(inbox.subjects) == 0
     assert len(inbox.emails) == 0
     assert len(inbox.uids) == 0
+
+
+
+
+'''
+========================================COMPOSE TEST========================================
+'''
+
+
+def test_compose(auth_client):
+    data = dict(email_to='tcctesteremail@gmail.com', subject="This is a test", body='This is an autiomatic message sent for testing', submit=True)
+    auth_client.post('/compose', data=data, follow_redirects=True)
+
+
+
+
+def test_delete(real_test_user):
+    inbox = Emails()
+    inbox.getEmails(real_test_user, "INBOX")
+    uids = inbox.uids
+    uidMax = max(uids)
+
+    inbox.moveToTrash(real_test_user, uidMax)
+    inbox.clearAll()
+    inbox.getEmails(real_test_user, "[Gmail]/Trash")
+
+    uids = inbox.uids
+    uidMax = max(uids)
+
+    inbox.deleteEmail(real_test_user, uidMax)
+    inbox.clearAll()
+    inbox.getEmails(real_test_user, "[Gmail]/Trash")
+    newUid = max(inbox.uids)
+    assert uidMax != newUid
+
+
+
+
