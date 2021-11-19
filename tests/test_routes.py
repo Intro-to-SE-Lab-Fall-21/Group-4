@@ -51,7 +51,7 @@ def client():
 def auth_client():
     app = create_app()
     app.config['TESTING'] = True
-    app.config['WTF_CSRF_ENABLED'] = False
+    app.config['WTF_CSRF_ENABLED']=False
     with app.test_client() as client:
         login(client, "tcctesteremail2@gmail.com", "123BigTest654")
         yield client
@@ -61,7 +61,7 @@ def auth_client():
 # To be used with the getEmails and sendEmail functions
 @pytest.fixture(scope='session')
 def real_test_user():
-    user = User.query.filter_by(email='tcctesteremail@gmail.com').first()
+    user = User.query.filter_by(email='tcctesteremail2@gmail.com').first()
     return user
 
 # To be used for all inbox tests.
@@ -83,6 +83,17 @@ def fake_test_user():
     return {'email' : 'notarealuser@gmail.com',
             'password' : 'fakepassword'
             }
+
+
+
+'''
+========================================NOTES TESTS========================================
+'''
+def test_notes(auth_client):
+    res = auth_client.get('/notes')
+    assert b"Grocery List" in res.data
+
+
 '''
 ========================================HTML TESTS========================================
 '''
@@ -110,7 +121,7 @@ def test_send_message(client):
 
 
 def test_login(client):
-    rv = login(client, 'tcctesteremail@gmail.com', '123BigTest654')
+    rv = login(client, 'tcctesteremail2@gmail.com', '123BigTest654')
     assert rv.status_code==200
     assert b'Hello' in rv.data
 
@@ -129,13 +140,6 @@ def test_html_logged_in(auth_client):
     assert res.status_code == 200
     res = auth_client.get('/logout')
     assert res.status_code == 302
-
-'''
-========================================NOTES TESTS========================================
-'''
-def test_notes(auth_client):
-    res = auth_client.get('/notes')
-    assert b"Grocery List" in res.data
 
 
 '''
@@ -172,13 +176,11 @@ def test_remove_to_trash(real_test_user):
 
 
 
-
-
-@pytest.mark.parametrize('value', (10, 50000))
+@pytest.mark.parametrize('value', (1, 50000))
 def test_select_emails(inbox, value):
-    if value == 9:
+    if value == 1:
         selected_email = inbox.selectEmail(value)
-        assert 'Dear Mr. Test' in selected_email.body
+        assert 'Hi Test2' in selected_email.body
     elif value == 50000:
         selected_email = inbox.selectEmail(value)
         assert selected_email == 'Failed'
@@ -195,13 +197,15 @@ def test_clear_all(inbox):
 
 
 '''
-========================================COMPOSE TEST========================================
+========================================COMPOSE/DELETE TEST========================================
 '''
 
 
 def test_compose(auth_client):
-    data = dict(email_to='tcctesteremail@gmail.com', subject="This is a test", body='This is an autiomatic message sent for testing', submit=True)
-    auth_client.post('/compose', data=data, follow_redirects=True)
+    data = dict(email_to='tcctesteremail2@gmail.com', subject="This is a test", body='This is an autiomatic message sent for testing', importNote=False, submit=True, note=None, attachment=None)
+    res = auth_client.post('/compose', data=data, follow_redirects=True)
+    assert res.status_code == 200
+
 
 
 
